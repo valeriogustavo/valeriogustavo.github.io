@@ -1,2 +1,1 @@
-# valeriogustavo.github.io
 Blog
