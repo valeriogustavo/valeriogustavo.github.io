@@ -1,0 +1,56 @@
+#!/bin/bash
+
+readonly INSTALL="apt install --no-install-recommends -y"
+
+$INSTALL gnupg
+apt      purge plymouth -y
+apt      autoclean && apt autoremove -y
+
+readonly WGET="wget -qO -"
+         KEY="apt-key add -"
+
+$WGET https://dl.xanmod.org/gpg.key | $KEY
+$WGET https://deb.opera.com/archive.key | $KEY
+$WGET http://archive.neon.kde.org/public.key | $KEY
+$WGET https://dl.google.com/linux/linux_signing_key.pub | $KEY
+$WGET https://brave-browser-apt-release.s3.brave.com/brave-core.asc | $KEY
+
+unset    KEY
+readonly KEY="apt-key adv --keyserver keyserver.ubuntu.com --recv-keys"
+
+$KEY 36E81C9267FD1383FCC4490983FBA1751378B444
+$KEY 22C4850146603F3DB0ED00479DA4BD18B9A06DE3
+$KEY A0062203196CA4482DDB859E4C1CBE14852541CB
+
+printf 'deb http://deb.xanmod.org releases main' > /etc/apt/sources.list.d/xanmod.list
+printf 'deb http://archive.neon.kde.org/user/ focal main' > /etc/apt/sources.list.d/neon.list
+printf 'deb https://deb.opera.com/opera-stable/ stable non-free' > /etc/apt/sources.list.d/opera.list
+printf 'deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main' > /etc/apt/sources.list.d/google.list
+printf 'deb http://ppa.launchpad.net/libreoffice/ppa/ubuntu focal main' > /etc/apt/sources.list.d/libreoffice.list
+printf 'deb http://ppa.launchpad.net/inkscape.dev/stable/ubuntu focal main' > /etc/apt/sources.list.d/inkscape.list
+printf 'deb http://ppa.launchpad.net/ubuntuhandbook1/audacity/ubuntu focal main' > /etc/apt/sources.list.d/audacity.list
+printf 'deb [arch=amd64] https://brave-browser-apt-release.s3.brave.com stable main' > /etc/apt/sources.list.d/brave.list
+
+apt update && apt full-upgrade -y
+$INSTALL linux-xanmod intel-microcode iucode-tool ufw preload
+
+ufw enable
+
+###KDE Connect
+ufw allow 1714:1764/tcp
+ufw allow 1714:1764/udp
+
+$INSTALL xserver-xorg-{video-intel,core} xinit alsa-base zram-config mesa-utils
+cp /usr/share/systemd/tmp.mount /etc/systemd/system/
+
+systemctl enable tmp.mount
+
+$INSTALL breeze{,-gtk-theme} po{werdevil,lkit-kde-agent-1} libpam-kwallet5 print-manager gwenview
+$INSTALL plasma-{nm,pa,{browser-,}integration,framework,workspace,desktop}
+$INSTALL kde-{spectacle,config-{sddm,gtk-style{,-preview}}
+$INSTALL k{enuedit,ate,onsole,win-x11,sysguard,deconnect,infocenter,torrent,screen,denlive,calc,rename,id3-qt,hotkeys,dialog}
+$INSTALL okular dolphin sddm synaptic elisa vlc systemsettings ark
+$INSTALL audacity calf-plugins gimp{,-gmic,-data-extras,-plugin-registry} inkscape mkvtoolnix-gui
+$INSTALL winff-qt ffmpeg{,thumbs} vokoscreen libreoffice-{calc,writer,l10n-pt-br,{kf,qt}5} u{disks2,power}
+
+
