@@ -34,6 +34,7 @@ printf 'deb http://ppa.launchpad.net/inkscape.dev/stable/ubuntu focal main' > /e
 printf 'deb http://ppa.launchpad.net/ubuntuhandbook1/audacity/ubuntu focal main' > /etc/apt/sources.list.d/audacity.list
 printf 'deb [arch=amd64] https://brave-browser-apt-release.s3.brave.com stable main' > /etc/apt/sources.list.d/brave.list
 
+
 apt update && apt full-upgrade -y
 $INSTALL linux-xanmod intel-microcode iucode-tool ufw python-is-python3 prel{oad,ink}
 
@@ -52,7 +53,7 @@ $INSTALL breeze{,-gtk-theme} po{werdevil,lkit-kde-agent-1} libpam-kwallet5 print
 $INSTALL plasma-{nm,pa,{browser-,}integration,framework,workspace,desktop}
 $INSTALL kde-{spectacle,config-{sddm,gtk-style{,-preview}}}
 $INSTALL k{menuedit,ate,onsole,win-x11,sysguard,deconnect,infocenter,torrent,screen,denlive,calc,rename,id3-qt,hotkeys,dialog}
-$INSTALL okular dolphin{,-plugins} kio-extras sddm synaptic elisa vlc systemsettings ark
+$INSTALL okular dolphin{,-plugins} kio-extras sddm synaptic elisa vlc{,-l10n} systemsettings ark
 $INSTALL audacity calf-plugins gimp{,-gmic,-data-extras,-plugin-registry} inkscape mkvtoolnix-gui
 $INSTALL winff-qt ffmpeg{,thumbs} vokoscreen libreoffice-{style-sifr,lightproof-pt-br,calc,writer,l10n-pt-br,{kf,qt}5} u{disks2,power}
 $INSTALL firefox{,-locale-pt} {opera,google-chrome}-stable brave-browser
