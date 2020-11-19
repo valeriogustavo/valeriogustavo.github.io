@@ -1,4 +1,6 @@
 #!/bin/bash
+## Instalação a partir da iso mínima do Ubuntu 20.04
+## http://archive.ubuntu.com/ubuntu/dists/focal/main/installer-amd64/current/legacy-images/netboot/mini.iso
 
 readonly INSTALL="apt install --no-install-recommends -y"
 
