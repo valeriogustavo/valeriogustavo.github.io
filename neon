@@ -1,6 +1,7 @@
 #!/bin/bash
-## Instalação a partir da iso mínima do Ubuntu 20.04
-## http://archive.ubuntu.com/ubuntu/dists/focal/main/installer-amd64/current/legacy-images/netboot/mini.iso
+### Gustavo Valério Ferreira
+### 18 de novembro de 2020
+###use in Ubuntu Netboot Iso (Ubuntu Mini iso)
 
 readonly INSTALL="apt install --no-install-recommends -y"
 
@@ -34,7 +35,7 @@ printf 'deb http://ppa.launchpad.net/ubuntuhandbook1/audacity/ubuntu focal main'
 printf 'deb [arch=amd64] https://brave-browser-apt-release.s3.brave.com stable main' > /etc/apt/sources.list.d/brave.list
 
 apt update && apt full-upgrade -y
-$INSTALL linux-xanmod intel-microcode iucode-tool ufw preload
+$INSTALL linux-xanmod intel-microcode iucode-tool ufw prel{oad,ink}
 
 ufw enable
 
@@ -49,10 +50,16 @@ systemctl enable tmp.mount
 
 $INSTALL breeze{,-gtk-theme} po{werdevil,lkit-kde-agent-1} libpam-kwallet5 print-manager gwenview
 $INSTALL plasma-{nm,pa,{browser-,}integration,framework,workspace,desktop}
-$INSTALL kde-{spectacle,config-{sddm,gtk-style{,-preview}}
-$INSTALL k{enuedit,ate,onsole,win-x11,sysguard,deconnect,infocenter,torrent,screen,denlive,calc,rename,id3-qt,hotkeys,dialog}
+$INSTALL kde-{spectacle,config-{sddm,gtk-style{,-preview}}}
+$INSTALL k{menuedit,ate,onsole,win-x11,sysguard,deconnect,infocenter,torrent,screen,denlive,calc,rename,id3-qt,hotkeys,dialog}
 $INSTALL okular dolphin sddm synaptic elisa vlc systemsettings ark
 $INSTALL audacity calf-plugins gimp{,-gmic,-data-extras,-plugin-registry} inkscape mkvtoolnix-gui
-$INSTALL winff-qt ffmpeg{,thumbs} vokoscreen libreoffice-{calc,writer,l10n-pt-br,{kf,qt}5} u{disks2,power}
+$INSTALL winff-qt ffmpeg{,thumbs} vokoscreen libreoffice-{style-sifr,calc,writer,l10n-pt-br,{kf,qt}5} u{disks2,power}
+$INSTALL firefox{,-locale-pt} {opera,google-chrome}-stable brave-browser
+
+sed -i 's/memfree = 50/memfree = 100/g'    /etc/preload.conf
+sed -i 's/memcached = 0/memcached = 30/g'  /etc/preload.conf
+sed -i 's/memcached = 0/memcached = 30/g'  /etc/preload.conf
+prelink -amvR
 
 
