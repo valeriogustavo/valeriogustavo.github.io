@@ -1,7 +1,8 @@
 #!/bin/bash
 ### Gustavo Valério Ferreira
 ### 18 de novembro de 2020
-###use in Ubuntu Netboot Iso (Ubuntu Mini iso)
+### use in Ubuntu Netboot Iso (Ubuntu Focal Mini iso)
+### http://archive.ubuntu.com/ubuntu/dists/focal/main/installer-amd64/current/legacy-images/netboot/mini.iso
 
 readonly INSTALL="apt install --no-install-recommends -y"
 
