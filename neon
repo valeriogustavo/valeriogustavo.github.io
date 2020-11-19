@@ -52,7 +52,7 @@ $INSTALL breeze{,-gtk-theme} po{werdevil,lkit-kde-agent-1} libpam-kwallet5 print
 $INSTALL plasma-{nm,pa,{browser-,}integration,framework,workspace,desktop}
 $INSTALL kde-{spectacle,config-{sddm,gtk-style{,-preview}}}
 $INSTALL k{menuedit,ate,onsole,win-x11,sysguard,deconnect,infocenter,torrent,screen,denlive,calc,rename,id3-qt,hotkeys,dialog}
-$INSTALL okular dolphin sddm synaptic elisa vlc systemsettings ark
+$INSTALL okular dolphin{,-plugins} kio-extras sddm synaptic elisa vlc systemsettings ark
 $INSTALL audacity calf-plugins gimp{,-gmic,-data-extras,-plugin-registry} inkscape mkvtoolnix-gui
 $INSTALL winff-qt ffmpeg{,thumbs} vokoscreen libreoffice-{style-sifr,calc,writer,l10n-pt-br,{kf,qt}5} u{disks2,power}
 $INSTALL firefox{,-locale-pt} {opera,google-chrome}-stable brave-browser
