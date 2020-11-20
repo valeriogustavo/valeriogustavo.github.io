@@ -34,14 +34,15 @@
 
 test $UID -ne 0 && printf 'Precisa ser root!\n';sudo su
 
+### Variáveis
+readonly WGET="wget -qO -"
+readonly KEY="apt-key add -"
 readonly INSTALL="apt install --no-install-recommends -y"
+readonly PPA="apt-key adv --keyserver keyserver.ubuntu.com --recv-keys"
 
 $INSTALL gnupg   #necessário para adicionar repositórios extras
 apt      purge plymouth -y
 apt      auto{,clean} && apt autoremove -y
-
-readonly WGET="wget -qO -"
-         KEY="apt-key add -"
 
 # Obtendo chaves do kernel e browsers
 # Obtendo também a chave do Projeto Neon
@@ -51,48 +52,99 @@ $WGET http://archive.neon.kde.org/public.key | $KEY
 $WGET https://dl.google.com/linux/linux_signing_key.pub | $KEY
 $WGET https://brave-browser-apt-release.s3.brave.com/brave-core.asc | $KEY
 
-unset    KEY
-readonly KEY="apt-key adv --keyserver keyserver.ubuntu.com --recv-keys"
+$PPA 36E81C9267FD1383FCC4490983FBA1751378B444 # Chave Libreoffice
+$PPA 22C4850146603F3DB0ED00479DA4BD18B9A06DE3 # Chave Inkscape Fresh
+$PPA A0062203196CA4482DDB859E4C1CBE14852541CB # Chave UbuntuHandbook - Audacity
+$PPA E6AC16572ED1AD6F96C7EBE01E5F8BBC5BEB10AE # Chave System76 - Somente para Chromium
 
-$KEY 36E81C9267FD1383FCC4490983FBA1751378B444 # Chave Libreoffice
-$KEY 22C4850146603F3DB0ED00479DA4BD18B9A06DE3 # Chave Inkscape Fresh
-$KEY A0062203196CA4482DDB859E4C1CBE14852541CB # Chave UbuntuHandbook - Audacity
-$KEY E6AC16572ED1AD6F96C7EBE01E5F8BBC5BEB10AE # Chave System76 - Somente para Chromium
+# Kernel XanMod
+printf 'deb [arch=amd64] http://deb.xanmod.org releases main' > /etc/apt/sources.list.d/xanmod-kernel.list
 
-printf 'deb http://deb.xanmod.org releases main' > /etc/apt/sources.list.d/xanmod.list
-printf 'deb http://ppa.launchpad.net/libreoffice/ppa/ubuntu focal main' > /etc/apt/sources.list.d/libreoffice.list
-printf 'deb http://ppa.launchpad.net/inkscape.dev/stable/ubuntu focal main' > /etc/apt/sources.list.d/inkscape.list
-printf 'deb http://ppa.launchpad.net/system76/pop/ubuntu focal main' > /etc/apt/sources.list.d/chromium-browser.list
-printf 'deb http://ppa.launchpad.net/ubuntuhandbook1/audacity/ubuntu focal main' > /etc/apt/sources.list.d/audacity.list
+# PPAs
+printf 'deb [arch=amd64] http://ppa.launchpad.net/libreoffice/ppa/ubuntu focal main' > /etc/apt/sources.list.d/libreoffice.list
+printf 'deb [arch=amd64] http://ppa.launchpad.net/inkscape.dev/stable/ubuntu focal main' > /etc/apt/sources.list.d/inkscape.list
+printf 'deb [arch=amd64] http://ppa.launchpad.net/system76/pop/ubuntu focal main' > /etc/apt/sources.list.d/chromium-browser.list
+printf 'deb [arch=amd64] http://ppa.launchpad.net/ubuntuhandbook1/audacity/ubuntu focal main' > /etc/apt/sources.list.d/audacity.list
+
+# Browsers
 printf 'deb [arch=amd64] https://deb.opera.com/opera-stable/ stable non-free' > /etc/apt/sources.list.d/opera-stable.list
 printf 'deb [arch=amd64] https://brave-browser-apt-release.s3.brave.com stable main' > /etc/apt/sources.list.d/brave.list
 printf 'deb [arch=amd64] https://dl.google.com/linux/chrome/deb/ stable main' > /etc/apt/sources.list.d/google-chrome.list
 
+# Reorganizando repositórios do Ubuntu
+rm -f /etc/apt/sources.list
+printf '
+# Canonical Partners
+deb [arch=amd64] http://archive.canonical.com/ubuntu/ focal partner
+
+# Ubuntu Repos Standards
+deb [arch=amd64] http://br.archive.ubuntu.com/ubuntu/ focal main restricted universe multiverse
+
+# Ubuntu Security
+deb [arch=amd64] http://security.ubuntu.com/ubuntu/ focal-security main restricted universe multiverse
+
+# Ubuntu Repos Standards Updates
+deb [arch=amd64] http://br.archive.ubuntu.com/ubuntu/ focal-updates main restricted universe multiverse
+
+# Ubuntu Backports
+deb [arch=amd64] http://br.archive.ubuntu.com/ubuntu/ focal-backports main restricted universe multiverse
+' > /etc/apt/sources.list.d/ubuntu.list
 
 # Repositórios do KDE Neon
 # Todas as versões estão disponíveis, porém terão ordem de preferência. User = padrão
-printf '#Neon User\ndeb http://archive.neon.kde.org/user/ focal main' > /etc/apt/sources.list.d/kde-neon.list
-printf '\n\n#Neon Testing\ndeb http://archive.neon.kde.org/testing/ focal main' >> /etc/apt/sources.list.d/kde-neon.list
-printf '\n\n#Neon Unstable\ndeb http://archive.neon.kde.org/unstable/ focal main' >> /etc/apt/sources.list.d/kde-neon.list
+printf '
+#Neon User
+deb [arch=amd64] http://archive.neon.kde.org/user/ focal main
+
+#Neon Testing
+deb [arch=amd64] http://archive.neon.kde.org/testing/ focal main
+
+#Neon Unstable
+deb [arch=amd64] http://archive.neon.kde.org/unstable/ focal main
+' > /etc/apt/sources.list.d/kde-neon.list
 
 # Bloqueando pacotes não-nativos
 # Impede instalação de softwares Snaps
-printf 'Package: snapd\nPin: release *\nPin-Priority: -1' > /etc/apt/preferences.d/snap
+printf '
+Package: snapd
+Pin: release *
+Pin-Priority: -1
+' > /etc/apt/preferences.d/snap
+
 # Impede instalação de softwares Flatpaks
-printf 'Package: flatpak\nPin: release *\nPin-Priority: -1' > /etc/apt/preferences.d/flatpak
+printf '
+Package: flatpak
+Pin: release *
+Pin-Priority: -1
+' > /etc/apt/preferences.d/flatpak
 
 
 # Libera apenas apenas o Chromium do repositório System76/Pop
-printf 'Package: *\nPin: release o=LP-PPA-system76-pop\nPin-Priority: -1' > /etc/apt/preferences.d/chromium
-printf '\n\nPackage: *chromium*\nPin: release o=LP-PPA-system76-pop\nPin-Priority: 1001' >> /etc/apt/preferences.d/chromium
+printf '
+Package: *
+Pin: release o=LP-PPA-system76-pop
+Pin-Priority: -1
+
+Package: *chromium*
+Pin: release o=LP-PPA-system76-pop
+Pin-Priority: 501
+' > /etc/apt/preferences.d/chromium
 
 
 # Programa a maior preferência aos pacotes do KDE Neon User Edition em relação aos do Ubuntu
-printf 'Package: *\nPin: release l=KDE neon - User Edition\nPin-Priority: 501' > /etc/apt/preferences.d/kde-neon
-# Programa a terceira preferência aos pacotes do KDE Neon Testing Edition -> A 2ª são os pacotes do Ubuntu e PPAs
-printf '\n\nPackage: *\nPin: release l=KDE neon - Testing Edition\nPin-Priority: 499' >> /etc/apt/preferences.d/kde-neon
-# Programa a quarta preferência aos pacotes do KDE Neon Unstable Edition (disponível apenas para testes de pacotes novos)
-printf '\n\nPackage: *\nPin: release l=KDE neon - Unstable Edition\nPin-Priority: 498' >> /etc/apt/preferences.d/kde-neon
+printf '
+Package: *
+Pin: release l=KDE neon - User Edition
+Pin-Priority: 501
+
+Package: *
+Pin: release l=KDE neon - Testing Edition
+Pin-Priority: 499
+
+Package: *
+Pin: release l=KDE neon - Unstable Edition
+Pin-Priority: 498
+' > /etc/apt/preferences.d/kde-neon
 
 apt auto{,clean}
 apt update && apt full-upgrade -y
@@ -143,9 +195,15 @@ mv -v /etc/netplan{,.orig}/ && mkdir /etc/netplan
 printf 'network:\n  version: 2\n  renderer: NetworkManager' > /etc/netplan/01-network-manager-all.yaml
 
 mv -v /etc/default/grub{,.orig}
-printf 'GRUB_DEFAULT=0\nGRUB_TIMEOUT=0\nGRUB_TIMEOUT_STYLE=hidden\nGRUB_CMDLINE_LINUX_DEFAULT="quiet"' > /etc/default/grub
-printf '\nGRUB_DISTRIBUTOR=`lsb_release -i -s 2> /dev/null || echo Debian`\nGRUB_CMDLINE_LINUX="mitigations=off loglevel=3 vga=current systemd.show_status=false"' >> /etc/default/grub
+printf '#Grub Settings
+GRUB_DEFAULT=0
+GRUB_TIMEOUT=0
+GRUB_TIMEOUT_STYLE=hidden
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash=silent"
+GRUB_DISTRIBUTOR=`lsb_release -i -s 2> /dev/null || echo Debian`
+GRUB_CMDLINE_LINUX="mitigations=off loglevel=3 vga=current systemd.show_status=false rd.udev.log_priority=3"
+' > /etc/default/grub
 
 ### Obtendo novo script para turbinar o Sysctl
 wget https://raw.githubusercontent.com/valeriogustavo/valeriogustavo.github.io/main/TuningSysctl
-chdmod +x TuningSysctl && ./TuningSysctl
+chdmod +x TuningSysctl && ./TuningSysctl && update-grub
