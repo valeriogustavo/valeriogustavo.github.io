@@ -44,6 +44,13 @@ $INSTALL gnupg   #necessário para adicionar repositórios extras
 apt      purge plymouth -y
 apt      auto{,clean} && apt autoremove -y
 
+# Habilitando boot pelo systemd -> Apenas para UEFI
+#bootctl install --path=/boot/efi
+#bootctl update
+#apt purge grub*
+#apt autoremove -y
+#apt install --reinstall efibootmgr
+
 # Obtendo chaves do kernel e browsers
 # Obtendo também a chave do Projeto Neon
 $WGET https://dl.xanmod.org/gpg.key | $KEY
@@ -118,7 +125,6 @@ Pin: release *
 Pin-Priority: -1
 ' > /etc/apt/preferences.d/flatpak
 
-
 # Libera apenas apenas o Chromium do repositório System76/Pop
 printf '
 Package: *
@@ -129,7 +135,6 @@ Package: *chromium*
 Pin: release o=LP-PPA-system76-pop
 Pin-Priority: 501
 ' > /etc/apt/preferences.d/chromium
-
 
 # Programa a maior preferência aos pacotes do KDE Neon User Edition em relação aos do Ubuntu
 printf '
@@ -174,7 +179,6 @@ sed -i 's/memcached = 0/memcached = 30/g'  /etc/preload.conf
 # Suporte Netflix/PrimeVideo a partir da lib do Chrome
 cp -rv /opt/google/chrome/WidevineCdm/ /usr/lib/chromium/
 cp -rv /opt/google/chrome/WidevineCdm/ /usr/lib/x86_64-linux-gnu/opera/
-
 
 cp -v /usr/share/systemd/tmp.mount /etc/systemd/system/
 systemctl disable NetworkManager-wait-online.service
