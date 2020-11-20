@@ -32,6 +32,8 @@
 ### Se seu hardware for Intel, apenas faça login e use o wget para obter:
 ### wget http://blog.gustavovalerio.com.br/Neon && chmod +x Neon && ./Neon
 
+test $UID -ne 0 && printf 'Precisa ser root!\n';sudo su
+
 readonly INSTALL="apt install --no-install-recommends -y"
 
 $INSTALL gnupg   #necessário para adicionar repositórios extras
@@ -103,16 +105,15 @@ ufw enable
 ufw allow 1714:1764/tcp
 ufw allow 1714:1764/udp
 
-$INSTALL xserver-xorg-{video-intel,core} xinit alsa-base zram-config mesa-utils
-
-$INSTALL breeze{,-gtk-theme} po{werdevil,lkit-kde-agent-1} libpam-kwallet5 print-manager gwenview
-$INSTALL plasma-{nm,pa,{browser-,}integration,framework,workspace,desktop}
 $INSTALL kde-{spectacle,config-{sddm,gtk-style{,-preview}}}
-$INSTALL k{menuedit,ate,onsole,win-x11,sysguard,deconnect,infocenter,torrent,screen,denlive,calc,rename,id3-qt,hotkeys,dialog}
-$INSTALL okular dolphin{,-plugins} kio-extras sddm synaptic elisa vlc{,-l10n} systemsettings ark
-$INSTALL audacity lsp-plugins-vst gimp{,-gmic,-data-extras,-plugin-registry} inkscape mkvtoolnix-gui
-$INSTALL winff-qt ffmpeg{,thumbs} vokoscreen libreoffice-{style-sifr,lightproof-pt-br,calc,writer,l10n-pt-br,{kf,qt}5} u{disks2,power}
+$INSTALL plasma-{nm,pa,{browser-,}integration,framework,workspace,desktop}
+$INSTALL xserver-xorg-{video-intel,core} xinit alsa-base zram-config mesa-utils
 $INSTALL firefox{,-locale-pt} {opera,google-chrome}-stable brave-browser chromium{,-l10n}
+$INSTALL okular dolphin{,-plugins} kio-extras sddm synaptic elisa vlc{,-l10n} systemsettings ark
+$INSTALL breeze{,-gtk-theme} po{werdevil,lkit-kde-agent-1} libpam-kwallet5 print-manager gwenview
+$INSTALL audacity lsp-plugins-vst gimp{,-gmic,-data-extras,-plugin-registry} inkscape mkvtoolnix-gui
+$INSTALL k{menuedit,ate,onsole,win-x11,sysguard,deconnect,infocenter,torrent,screen,denlive,calc,rename,id3-qt,hotkeys,dialog}
+$INSTALL winff-qt ffmpeg{,thumbs} vokoscreen libreoffice-{style-sifr,lightproof-pt-br,calc,writer,l10n-pt-br,{kf,qt}5} u{disks2,power}
 
 sed -i 's/memfree = 50/memfree = 100/g'    /etc/preload.conf
 sed -i 's/memcached = 0/memcached = 30/g'  /etc/preload.conf
@@ -141,4 +142,10 @@ sed -i 's/managed=false/managed=true/g' /etc/NetworkManager/NetworkManager.conf
 mv -v /etc/netplan{,.orig}/ && mkdir /etc/netplan
 printf 'network:\n  version: 2\n  renderer: NetworkManager' > /etc/netplan/01-network-manager-all.yaml
 
+mv -v /etc/default/grub{,.orig}
+printf 'GRUB_DEFAULT=0\nGRUB_TIMEOUT=0\nGRUB_TIMEOUT_STYLE=hidden\nGRUB_CMDLINE_LINUX_DEFAULT="quiet"' > /etc/default/grub
+printf '\nGRUB_DISTRIBUTOR=`lsb_release -i -s 2> /dev/null || echo Debian`\nGRUB_CMDLINE_LINUX="mitigations=off loglevel=3 vga=current systemd.show_status=false"' >> /etc/default/grub
 
+### Obtendo novo script para turbinar o Sysctl
+wget https://raw.githubusercontent.com/valeriogustavo/valeriogustavo.github.io/main/TuningSysctl
+chdmod +x TuningSysctl && ./TuningSysctl
