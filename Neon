@@ -1,18 +1,41 @@
 #!/bin/bash
-### Gustavo Valério Ferreira
-### 18 de novembro de 2020
-### Use in Ubuntu Netboot Iso (Ubuntu Focal Mini iso)
+
+### Script para a instalação do KDE Neon híbrido a partir do Ubuntu Netboot 20.04
+### Por Gustavo Valério Ferreira - www.gustavovalerio.com.br
+### Escrito em 18/11/2020 | Atualizada em 20/11/2020
+### Use a iso Netboot 20.04
 ### http://archive.ubuntu.com/ubuntu/dists/focal/main/installer-amd64/current/legacy-images/netboot/mini.iso
+
+### Este script instala o KDE Mínimo e mais softwares
+### Para quem gostar de um sistema limpo, basta remover
+### os softwares escolhidos, tal como os browsers programados.
+### O Suporte Netflix/PrimeVideo no Chromium depende do Chrome
+### Mas pode ser facilmente corrigo com o mesmo plugin do Brave Browser
+### Ou obtido a partir de outra fonte, como o respositório Contrib do Debian, por exemplo.
+
+### O suporte a Flatpak e Snaps é desabilitado.
+### O KDE Neon é montado aqui como um sistema Híbrido.
+### O repositório User do KDE Neon tem maior preferência.
+### Repositórios extras são adicionados para manter outros softwares
+### Instalados ou atualizados. Libreoffice/Audacity e Inkscape, por exemplo.
+### O Plymouth é removido, por não ser útil. Kernel XanMod é instalado por padrão
+### Se não gosta do XanMod, rremova as linhas necessárias, como também o repositório.
+
+### Note que o script é focado em hardware Intel.
+### Se seu hardware for diferente, altere as linhas necessárias.
+### Minha instalação atual e padrão foi feita de acordo com este script.
 
 readonly INSTALL="apt install --no-install-recommends -y"
 
-$INSTALL gnupg
+$INSTALL gnupg   #necessário para adicionar repositórios extras
 apt      purge plymouth -y
-apt      autoclean && apt autoremove -y
+apt      auto{,clean} && apt autoremove -y
 
 readonly WGET="wget -qO -"
          KEY="apt-key add -"
 
+# Obtendo chaves do kernel e browsers
+# Obtendo também a chave do Projeto Neon
 $WGET https://dl.xanmod.org/gpg.key | $KEY
 $WGET https://deb.opera.com/archive.key | $KEY
 $WGET http://archive.neon.kde.org/public.key | $KEY
@@ -22,23 +45,48 @@ $WGET https://brave-browser-apt-release.s3.brave.com/brave-core.asc | $KEY
 unset    KEY
 readonly KEY="apt-key adv --keyserver keyserver.ubuntu.com --recv-keys"
 
-$KEY 36E81C9267FD1383FCC4490983FBA1751378B444
-$KEY 22C4850146603F3DB0ED00479DA4BD18B9A06DE3
-$KEY A0062203196CA4482DDB859E4C1CBE14852541CB
+$KEY 36E81C9267FD1383FCC4490983FBA1751378B444 # Chave Libreoffice
+$KEY 22C4850146603F3DB0ED00479DA4BD18B9A06DE3 # Chave Inkscape Fresh
+$KEY A0062203196CA4482DDB859E4C1CBE14852541CB # Chave UbuntuHandbook - Audacity
+$KEY E6AC16572ED1AD6F96C7EBE01E5F8BBC5BEB10AE # Chave System76 - Somente para Chromium
 
 printf 'deb http://deb.xanmod.org releases main' > /etc/apt/sources.list.d/xanmod.list
-printf 'deb http://archive.neon.kde.org/user/ focal main' > /etc/apt/sources.list.d/neon.list
-printf 'deb https://deb.opera.com/opera-stable/ stable non-free' > /etc/apt/sources.list.d/opera-stable.list
 printf 'deb http://ppa.launchpad.net/libreoffice/ppa/ubuntu focal main' > /etc/apt/sources.list.d/libreoffice.list
 printf 'deb http://ppa.launchpad.net/inkscape.dev/stable/ubuntu focal main' > /etc/apt/sources.list.d/inkscape.list
+printf 'deb http://ppa.launchpad.net/system76/pop/ubuntu focal main' > /etc/apt/sources.list.d/chromium-browser.list
 printf 'deb http://ppa.launchpad.net/ubuntuhandbook1/audacity/ubuntu focal main' > /etc/apt/sources.list.d/audacity.list
-printf 'deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main' > /etc/apt/sources.list.d/google-chrome.list
+printf 'deb [arch=amd64] https://deb.opera.com/opera-stable/ stable non-free' > /etc/apt/sources.list.d/opera-stable.list
 printf 'deb [arch=amd64] https://brave-browser-apt-release.s3.brave.com stable main' > /etc/apt/sources.list.d/brave.list
+printf 'deb [arch=amd64] https://dl.google.com/linux/chrome/deb/ stable main' > /etc/apt/sources.list.d/google-chrome.list
 
-sleep 3
-apt update
-sleep 3
-apt full-upgrade -y
+
+# Repositórios do KDE Neon
+# Todas as versões estão disponíveis, porém terão ordem de preferência. User = padrão
+printf '#Neon User\ndeb http://archive.neon.kde.org/user/ focal main' > /etc/apt/sources.list.d/kde-neon.list
+printf '\n\n#Neon Testing\ndeb http://archive.neon.kde.org/testing/ focal main' >> /etc/apt/sources.list.d/kde-neon.list
+printf '\n\n#Neon Unstable\ndeb http://archive.neon.kde.org/unstable/ focal main' >> /etc/apt/sources.list.d/kde-neon.list
+
+# Bloqueando pacotes não-nativos
+# Impede instalação de softwares Snaps
+printf 'Package: snapd\nPin: release *\nPin-Priority: -1' > /etc/apt/preferences.d/snap
+# Impede instalação de softwares Flatpaks
+printf 'Package: flatpak\nPin: release *\nPin-Priority: -1' > /etc/apt/preferences.d/flatpak
+
+
+# Libera apenas apenas o Chromium do repositório System76/Pop
+printf 'Package: *\nPin: release o=LP-PPA-system76-pop\nPin-Priority: -1' > /etc/apt/preferences.d/chromium
+printf '\n\nPackage: *chromium*\nPin: release o=LP-PPA-system76-pop\nPin-Priority: 1001' >> /etc/apt/preferences.d/chromium
+
+
+# Programa a maior preferência aos pacotes do KDE Neon User Edition em relação aos do Ubuntu
+printf 'Package: *\nPin: release l=KDE neon - User Edition\nPin-Priority: 501' > /etc/apt/preferences.d/kde-neon
+# Programa a terceira preferência aos pacotes do KDE Neon Testing Edition -> A 2ª são os pacotes do Ubuntu e PPAs
+printf '\n\nPackage: *\nPin: release l=KDE neon - Testing Edition\nPin-Priority: 499' >> /etc/apt/preferences.d/kde-neon
+# Programa a quarta preferência aos pacotes do KDE Neon Unstable Edition (disponível apenas para testes de pacotes novos)
+printf '\n\nPackage: *\nPin: release l=KDE neon - Unstable Edition\nPin-Priority: 498' >> /etc/apt/preferences.d/kde-neon
+
+apt auto{,clean}
+apt update && apt full-upgrade -y
 
 $INSTALL linux-xanmod intel-microcode iucode-tool ufw python-is-python3 prel{oad,ink}
 
@@ -49,29 +97,41 @@ ufw allow 1714:1764/tcp
 ufw allow 1714:1764/udp
 
 $INSTALL xserver-xorg-{video-intel,core} xinit alsa-base zram-config mesa-utils
-cp /usr/share/systemd/tmp.mount /etc/systemd/system/
 
 $INSTALL breeze{,-gtk-theme} po{werdevil,lkit-kde-agent-1} libpam-kwallet5 print-manager gwenview
 $INSTALL plasma-{nm,pa,{browser-,}integration,framework,workspace,desktop}
 $INSTALL kde-{spectacle,config-{sddm,gtk-style{,-preview}}}
 $INSTALL k{menuedit,ate,onsole,win-x11,sysguard,deconnect,infocenter,torrent,screen,denlive,calc,rename,id3-qt,hotkeys,dialog}
 $INSTALL okular dolphin{,-plugins} kio-extras sddm synaptic elisa vlc{,-l10n} systemsettings ark
-$INSTALL audacity calf-plugins gimp{,-gmic,-data-extras,-plugin-registry} inkscape mkvtoolnix-gui
+$INSTALL audacity lsp-plugins-vst gimp{,-gmic,-data-extras,-plugin-registry} inkscape mkvtoolnix-gui
 $INSTALL winff-qt ffmpeg{,thumbs} vokoscreen libreoffice-{style-sifr,lightproof-pt-br,calc,writer,l10n-pt-br,{kf,qt}5} u{disks2,power}
-$INSTALL firefox{,-locale-pt} {opera,google-chrome}-stable brave-browser
+$INSTALL firefox{,-locale-pt} {opera,google-chrome}-stable brave-browser chromium{,-l10n}
 
 sed -i 's/memfree = 50/memfree = 100/g'    /etc/preload.conf
 sed -i 's/memcached = 0/memcached = 30/g'  /etc/preload.conf
 sed -i 's/memcached = 0/memcached = 30/g'  /etc/preload.conf
 
-systemctl enable tmp.mount upower
+# Suporte Netflix/PrimeVideo a partir da lib do Chrome
+cp -rv /opt/google/chrome/WidevineCdm/ /usr/lib/chromium/
+cp -rv /opt/google/chrome/WidevineCdm/ /usr/lib/x86_64-linux-gnu/opera/
+
+
+cp -v /usr/share/systemd/tmp.mount /etc/systemd/system/
 systemctl disable NetworkManager-wait-online.service
+systemctl enable tmp.mount upower
 
-apt clean
-apt autoclean
-apt autoremove -y
-
-modprobe zram
 prelink -amvR
+modprobe zram tcp_bbr
+
+
+### Corrigindo o problema de rede não gerenciável pós-instalação:
+mv -v /etc/network/interfaces{,.orig}
+printf 'auto lo\niface lo inet loopback' > /etc/network/interfaces
+
+cp -rv /etc/NetworkManager/NetworkManager.conf{,.orig}
+sed -i 's/managed=false/managed=true/g' /etc/NetworkManager/NetworkManager.conf
+
+mv -v /etc/netplan{,.orig}/ && mkdir /etc/netplan
+printf 'network:\n  version: 2\n  renderer: NetworkManager' > /etc/netplan/01-network-manager-all.yaml
 
 
