@@ -25,6 +25,13 @@
 ### Se seu hardware for diferente, altere as linhas necessárias.
 ### Minha instalação atual e padrão foi feita de acordo com este script.
 
+
+### Faça a instalação do Ubuntu Minimal normalmente
+### Na hora de escolher as Interfaces do Ubuntu, não marque nada.
+### Quando a instalação terminar, restará apenas a tela preta do shell.
+### Se seu hardware for Intel, apenas faça login e use o wget para obter:
+### wget http://blog.gustavovalerio.com.br/Neon && chmod +x Neon && ./Neon
+
 readonly INSTALL="apt install --no-install-recommends -y"
 
 $INSTALL gnupg   #necessário para adicionar repositórios extras
