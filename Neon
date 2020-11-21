@@ -32,8 +32,6 @@
 ### Se seu hardware for Intel, apenas faça login e use o wget para obter:
 ### wget http://blog.gustavovalerio.com.br/Neon && chmod +x Neon && ./Neon
 
-test $UID -ne 0 && printf 'Precisa ser root!\n';sudo su
-
 ### Variáveis
 readonly WGET="wget -qO -"
 readonly KEY="apt-key add -"
@@ -42,7 +40,9 @@ readonly PPA="apt-key adv --keyserver keyserver.ubuntu.com --recv-keys"
 
 $INSTALL gnupg   #necessário para adicionar repositórios extras
 apt      purge plymouth -y
-apt      auto{,clean} && apt autoremove -y
+apt      clean
+apt      autoclean
+apt      autoremove -y
 
 # Habilitando boot pelo systemd -> Apenas para UEFI
 #bootctl install --path=/boot/efi
@@ -57,7 +57,6 @@ $WGET https://dl.xanmod.org/gpg.key | $KEY
 $WGET https://deb.opera.com/archive.key | $KEY
 $WGET http://archive.neon.kde.org/public.key | $KEY
 $WGET https://dl.google.com/linux/linux_signing_key.pub | $KEY
-$WGET https://brave-browser-apt-release.s3.brave.com/brave-core.asc | $KEY
 
 $PPA 36E81C9267FD1383FCC4490983FBA1751378B444 # Chave Libreoffice
 $PPA 22C4850146603F3DB0ED00479DA4BD18B9A06DE3 # Chave Inkscape Fresh
@@ -75,40 +74,49 @@ printf 'deb [arch=amd64] http://ppa.launchpad.net/ubuntuhandbook1/audacity/ubunt
 
 # Browsers
 printf 'deb [arch=amd64] https://deb.opera.com/opera-stable/ stable non-free' > /etc/apt/sources.list.d/opera-stable.list
-printf 'deb [arch=amd64] https://brave-browser-apt-release.s3.brave.com stable main' > /etc/apt/sources.list.d/brave.list
 printf 'deb [arch=amd64] https://dl.google.com/linux/chrome/deb/ stable main' > /etc/apt/sources.list.d/google-chrome.list
 
 # Reorganizando repositórios do Ubuntu
 rm -f /etc/apt/sources.list
-printf '
-# Canonical Partners
+printf '# Canonical Partners
 deb [arch=amd64] http://archive.canonical.com/ubuntu/ focal partner
+> /etc/apt/sources.list.d/canonical-partners.list
 
-# Ubuntu Repos Standards
+printf '# Ubuntu Repos Standards
 deb [arch=amd64] http://br.archive.ubuntu.com/ubuntu/ focal main restricted universe multiverse
+' > /etc/apt/sources.list.d/ubuntu-standards.list
 
-# Ubuntu Security
+printf '# Ubuntu Security
 deb [arch=amd64] http://security.ubuntu.com/ubuntu/ focal-security main restricted universe multiverse
+' > /etc/apt/sources.list.d/ubuntu-security.list
 
-# Ubuntu Repos Standards Updates
+printf '# Ubuntu Repos Standards Updates
 deb [arch=amd64] http://br.archive.ubuntu.com/ubuntu/ focal-updates main restricted universe multiverse
+' > /etc/apt/sources.list.d/ubuntu-updates.list
 
-# Ubuntu Backports
+printf '# Ubuntu Backports
 deb [arch=amd64] http://br.archive.ubuntu.com/ubuntu/ focal-backports main restricted universe multiverse
-' > /etc/apt/sources.list.d/ubuntu.list
+' > /etc/apt/sources.list.d/ubuntu-backports.list
 
-# Repositórios do KDE Neon
-# Todas as versões estão disponíveis, porém terão ordem de preferência. User = padrão
-printf '
-#Neon User
+printf '#Neon User
 deb [arch=amd64] http://archive.neon.kde.org/user/ focal main
+' > /etc/apt/sources.list.d/neon.list
 
-#Neon Testing
-deb [arch=amd64] http://archive.neon.kde.org/testing/ focal main
+#Adicionando travas
 
-#Neon Unstable
-deb [arch=amd64] http://archive.neon.kde.org/unstable/ focal main
-' > /etc/apt/sources.list.d/kde-neon.list
+# Impede instalação do Plymouth
+printf '
+Package: *plymouth*
+Pin: release *
+Pin-Priority: -1
+' > /etc/apt/preferences.d/10-plymouth
+
+# Impede instalação do Packagekit
+printf '
+Package: *packagekit*
+Pin: release *
+Pin-Priority: -1
+' > /etc/apt/preferences.d/20-packagekit
 
 # Bloqueando pacotes não-nativos
 # Impede instalação de softwares Snaps
@@ -116,14 +124,21 @@ printf '
 Package: snapd
 Pin: release *
 Pin-Priority: -1
-' > /etc/apt/preferences.d/snap
+' > /etc/apt/preferences.d/30-snap
 
 # Impede instalação de softwares Flatpaks
 printf '
 Package: flatpak
 Pin: release *
 Pin-Priority: -1
-' > /etc/apt/preferences.d/flatpak
+' > /etc/apt/preferences.d/40-flatpak
+
+# Impede instalação do akonadi
+printf '
+Package: *akonadi*
+Pin: release *
+Pin-Priority: -1
+' > /etc/apt/preferences.d/50-akonadi
 
 # Libera apenas apenas o Chromium do repositório System76/Pop
 printf '
@@ -133,30 +148,178 @@ Pin-Priority: -1
 
 Package: *chromium*
 Pin: release o=LP-PPA-system76-pop
-Pin-Priority: 501
-' > /etc/apt/preferences.d/chromium
+Pin-Priority: 1100
+' > /etc/apt/preferences.d/60-chromium
 
-# Programa a maior preferência aos pacotes do KDE Neon User Edition em relação aos do Ubuntu
 printf '
-Package: *
-Pin: release l=KDE neon - User Edition
-Pin-Priority: 501
+# SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL
+# SPDX-FileCopyrightText: 2019 Jonathan Riddell <jr@jriddell.org>
 
-Package: *
-Pin: release l=KDE neon - Testing Edition
-Pin-Priority: 499
+Package: python3-distupgrade
+Pin: origin archive.neon.kde.org
+Pin-Priority: 1100
 
-Package: *
-Pin: release l=KDE neon - Unstable Edition
-Pin-Priority: 498
-' > /etc/apt/preferences.d/kde-neon
+Package: ubuntu-release-upgrader-core
+Pin: origin archive.neon.kde.org
+Pin-Priority: 1100
 
-apt auto{,clean}
-apt update && apt full-upgrade -y
+Package: ubuntu-release-upgrader-gtk
+Pin: origin archive.neon.kde.org
+Pin-Priority: 1100
+
+Package: ubuntu-release-upgrader-qt
+Pin: origin archive.neon.kde.org
+Pin-Priority: 1100
+' > /etc/apt/preferences.d/50-neon-ubuntu-release-upgrader
+
+printf '
+# SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL
+# SPDX-FileCopyrightText: 2019 Jonathan Riddell <jr@jriddell.org>
+
+Package: libqtav1
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+
+Package: libqtavwidgets1
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+
+Package: libqtav-dev
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+
+Package: libqtav-private-dev
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+
+Package: qml-module-qtav
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+
+Package: qtav-players
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+
+Package: libepub-dev
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+
+Package: libepub0
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+
+Package: ebook-tools-dbg
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+
+Package: epub-utils
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+
+Package: bubblewrap
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+
+Package: libgwenhywfar79-dev
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+
+Package: libgwenhywfar-core-dev
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+
+Package: libgwengui-fox16-dev
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+
+Package: libgwengui-gtk3-dev
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+
+Package: libgwengui-qt5-dev
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+
+Package: libgwenhywfar-doc
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+
+Package: libgwenhywfar79
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+
+Package: libgwenhywfar-data
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+
+Package: gwenhywfar-tools
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+
+Package: libgwengui-cpp0
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+
+Package: libgwengui-fox16-0
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+
+Package: libgwengui-qt5-0
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+
+Package: libgwengui-gtk3-0
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+
+Package: iio-sensor-proxy
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+
+Package: zipmerge
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+
+Package: ziptool
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+
+Package: zipcmp
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+
+Package: python-sip
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+
+Package: libzip-dev
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+
+Package: python-sip-dev
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+
+Package: wayland-protocols
+Pin: release o=Ubuntu
+Pin-Priority: 1100
+' > /etc/apt/preferences.d/99-focal-overrides
+
+printf '
+# SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL
+# SPDX-FileCopyrightText: 2019 Jonathan Riddell <jr@jriddell.org>
+
+Package: base-files
+Pin: origin archive.neon.kde.org
+Pin-Priority: 1100
+' > /etc/apt/preferences.d/99-neon-base-files
+
+apt clean
+apt autoclean
+apt update
+apt full-upgrade -y
 
 $INSTALL linux-xanmod intel-microcode iucode-tool ufw python-is-python3 prel{oad,ink}
-
-ufw enable
 
 ###KDE Connect
 ufw allow 1714:1764/tcp
@@ -165,12 +328,12 @@ ufw allow 1714:1764/udp
 $INSTALL kde-{spectacle,config-{sddm,gtk-style{,-preview}}}
 $INSTALL plasma-{nm,pa,{browser-,}integration,framework,workspace,desktop}
 $INSTALL xserver-xorg-{video-intel,core} xinit alsa-base zram-config mesa-utils
-$INSTALL firefox{,-locale-pt} {opera,google-chrome}-stable brave-browser chromium{,-l10n}
+$INSTALL firefox{,-locale-pt} {opera,google-chrome}-stable chromium{,-l10n}
 $INSTALL okular dolphin{,-plugins} kio-extras sddm synaptic elisa vlc{,-l10n} systemsettings ark
 $INSTALL breeze{,-gtk-theme} po{werdevil,lkit-kde-agent-1} libpam-kwallet5 print-manager gwenview
 $INSTALL audacity lsp-plugins-vst gimp{,-gmic,-data-extras,-plugin-registry} inkscape mkvtoolnix-gui
 $INSTALL k{menuedit,ate,onsole,win-x11,sysguard,deconnect,infocenter,torrent,screen,denlive,calc,rename,id3-qt,hotkeys,dialog}
-$INSTALL winff-qt ffmpeg{,thumbs} vokoscreen libreoffice-{style-sifr,lightproof-pt-br,calc,writer,l10n-pt-br,{kf,qt}5} u{disks2,power}
+$INSTALL winff-qt ffmpeg{,thumbs} vokoscreen libreoffice-{style-sifr,lightproof-pt-br,calc,writer,l10n-pt-br,{kf,qt}5} u{disks2,power} thermald
 
 sed -i 's/memfree = 50/memfree = 100/g'    /etc/preload.conf
 sed -i 's/memcached = 0/memcached = 30/g'  /etc/preload.conf
@@ -184,8 +347,7 @@ cp -v /usr/share/systemd/tmp.mount /etc/systemd/system/
 systemctl disable NetworkManager-wait-online.service
 systemctl enable tmp.mount upower
 
-prelink -amvR
-modprobe zram tcp_bbr
+ufw enable
 
 
 ### Corrigindo o problema de rede não gerenciável pós-instalação:
@@ -205,9 +367,10 @@ GRUB_TIMEOUT=0
 GRUB_TIMEOUT_STYLE=hidden
 GRUB_CMDLINE_LINUX_DEFAULT="quiet splash=silent"
 GRUB_DISTRIBUTOR=`lsb_release -i -s 2> /dev/null || echo Debian`
-GRUB_CMDLINE_LINUX="mitigations=off loglevel=3 vga=current systemd.show_status=false rd.udev.log_priority=3"
+GRUB_CMDLINE_LINUX="mitigations=off loglevel=3 vga=current systemd.show_status=false rd.udev.log_priority=3  libahci.ignore_sss=1"
 ' > /etc/default/grub
 
-### Obtendo novo script para turbinar o Sysctl
-wget https://raw.githubusercontent.com/valeriogustavo/valeriogustavo.github.io/main/TuningSysctl
-chdmod +x TuningSysctl && ./TuningSysctl && update-grub
+modprobe zram tcp_bbr
+prelink -amvR
+update-grub
+reboot
