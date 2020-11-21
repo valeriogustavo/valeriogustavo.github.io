@@ -165,16 +165,18 @@ ufw allow 1714:1764/udp
 $INSTALL kde-{spectacle,config-{sddm,gtk-style{,-preview}}}
 $INSTALL plasma-{nm,pa,{browser-,}integration,framework,workspace,desktop}
 $INSTALL xserver-xorg-{video-intel,core} xinit alsa-base zram-config mesa-utils
-$INSTALL firefox{,-locale-pt} {opera,google-chrome}-stable chromium{,-l10n}
-$INSTALL okular dolphin{,-plugins} kio-extras sddm synaptic elisa vlc{,-l10n} systemsettings ark
-$INSTALL breeze{,-gtk-theme} po{werdevil,lkit-kde-agent-1} libpam-kwallet5 print-manager gwenview
+$INSTALL firefox{,-locale-pt} {opera,google-chrome}-stable chromium{,-l10n} irqbalance
+$INSTALL okular dolphin{,-plugins} kio-extras sddm synaptic elisa vlc{,-l10n} systemsettings ark 
+$INSTALL breeze{,-gtk-theme} po{werdevil,lkit-kde-agent-1} libpam-kwallet5 print-manager gwenview  thermald
 $INSTALL audacity lsp-plugins-vst gimp{,-gmic,-data-extras,-plugin-registry} inkscape mkvtoolnix-gui neon-settings-2
 $INSTALL k{menuedit,ate,onsole,win-x11,sysguard,deconnect,infocenter,torrent,screen,denlive,calc,rename,id3-qt,hotkeys,dialog}
-$INSTALL winff-qt ffmpeg{,thumbs} vokoscreen libreoffice-{style-sifr,lightproof-pt-br,calc,writer,l10n-pt-br,{kf,qt}5} u{disks2,power} thermald
+$INSTALL winff-qt ffmpeg{,thumbs} vokoscreen libreoffice-{style-sifr,lightproof-pt-br,calc,writer,l10n-pt-br,{kf,qt}5} u{disks2,power}
 
-sed -i 's/memfree = 50/memfree = 100/g'    /etc/preload.conf
-sed -i 's/memcached = 0/memcached = 30/g'  /etc/preload.conf
-sed -i 's/memcached = 0/memcached = 30/g'  /etc/preload.conf
+sed -i 's/memfree = 50/memfree = 100/g'         /etc/preload.conf
+sed -i 's/memcached = 0/memcached = 30/g'       /etc/preload.conf
+sed -i 's/memcached = 0/memcached = 30/g'       /etc/preload.conf
+sed -i 's/PRELINKING=unknown/PRELINKING=yes/g'  /etc/default/prelink
+sed -i 's/COMPRESS=lz4/COMPRESS=gzip/g'         /etc/initramfs-tools/initramfs.conf
 
 # Suporte Netflix/PrimeVideo a partir da lib do Chrome
 cp -rv /opt/google/chrome/WidevineCdm/ /usr/lib/chromium/
@@ -188,13 +190,15 @@ ufw enable
 
 
 ### Corrigindo o problema de rede não gerenciável pós-instalação:
+mkdir -p /etc/network/ #às vezes o sistema não cria -> Bug?
 mv -v /etc/network/interfaces{,.orig}
 printf 'auto lo\niface lo inet loopback' > /etc/network/interfaces
 
 cp -rv /etc/NetworkManager/NetworkManager.conf{,.orig}
 sed -i 's/managed=false/managed=true/g' /etc/NetworkManager/NetworkManager.conf
 
-mv -v /etc/netplan{,.orig}/ && mkdir /etc/netplan
+mv -v /etc/netplan{,.orig}/
+mkdir /etc/netplan
 printf 'network:\n  version: 2\n  renderer: NetworkManager' > /etc/netplan/01-network-manager-all.yaml
 
 mv -v /etc/default/grub{,.orig}
@@ -207,7 +211,10 @@ GRUB_DISTRIBUTOR=`lsb_release -i -s 2> /dev/null || echo Debian`
 GRUB_CMDLINE_LINUX="mitigations=off loglevel=3 vga=current systemd.show_status=false rd.udev.log_priority=3  libahci.ignore_sss=1"
 ' > /etc/default/grub
 
-modprobe zram tcp_bbr
+#Executando o Prelink automaticamente a cada instalação
+printf 'export KDE_IS_PRELINKED=1' > /etc/profile.d/prelink.sh
+printf 'DPkg::Post-Invoke {"/usr/sbin/prelink -amR";}' >> /etc/apt/apt.conf
+
 prelink -amvR
 update-grub
 reboot
