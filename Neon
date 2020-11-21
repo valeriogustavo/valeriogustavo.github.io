@@ -80,7 +80,7 @@ printf 'deb [arch=amd64] https://dl.google.com/linux/chrome/deb/ stable main' > 
 rm -f /etc/apt/sources.list
 printf '# Canonical Partners
 deb [arch=amd64] http://archive.canonical.com/ubuntu/ focal partner
-> /etc/apt/sources.list.d/canonical-partners.list
+' > /etc/apt/sources.list.d/canonical-partners.list
 
 printf '# Ubuntu Repos Standards
 deb [arch=amd64] http://br.archive.ubuntu.com/ubuntu/ focal main restricted universe multiverse
@@ -113,7 +113,7 @@ Pin-Priority: -1
 
 # Impede instalação do Packagekit
 printf '
-Package: *packagekit*
+Package: packagekit
 Pin: release *
 Pin-Priority: -1
 ' > /etc/apt/preferences.d/20-packagekit
@@ -135,7 +135,7 @@ Pin-Priority: -1
 
 # Impede instalação do akonadi
 printf '
-Package: *akonadi*
+Package: akonadi-server
 Pin: release *
 Pin-Priority: -1
 ' > /etc/apt/preferences.d/50-akonadi
@@ -150,169 +150,6 @@ Package: *chromium*
 Pin: release o=LP-PPA-system76-pop
 Pin-Priority: 1100
 ' > /etc/apt/preferences.d/60-chromium
-
-printf '
-# SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL
-# SPDX-FileCopyrightText: 2019 Jonathan Riddell <jr@jriddell.org>
-
-Package: python3-distupgrade
-Pin: origin archive.neon.kde.org
-Pin-Priority: 1100
-
-Package: ubuntu-release-upgrader-core
-Pin: origin archive.neon.kde.org
-Pin-Priority: 1100
-
-Package: ubuntu-release-upgrader-gtk
-Pin: origin archive.neon.kde.org
-Pin-Priority: 1100
-
-Package: ubuntu-release-upgrader-qt
-Pin: origin archive.neon.kde.org
-Pin-Priority: 1100
-' > /etc/apt/preferences.d/50-neon-ubuntu-release-upgrader
-
-printf '
-# SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL
-# SPDX-FileCopyrightText: 2019 Jonathan Riddell <jr@jriddell.org>
-
-Package: libqtav1
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-
-Package: libqtavwidgets1
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-
-Package: libqtav-dev
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-
-Package: libqtav-private-dev
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-
-Package: qml-module-qtav
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-
-Package: qtav-players
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-
-Package: libepub-dev
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-
-Package: libepub0
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-
-Package: ebook-tools-dbg
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-
-Package: epub-utils
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-
-Package: bubblewrap
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-
-Package: libgwenhywfar79-dev
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-
-Package: libgwenhywfar-core-dev
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-
-Package: libgwengui-fox16-dev
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-
-Package: libgwengui-gtk3-dev
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-
-Package: libgwengui-qt5-dev
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-
-Package: libgwenhywfar-doc
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-
-Package: libgwenhywfar79
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-
-Package: libgwenhywfar-data
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-
-Package: gwenhywfar-tools
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-
-Package: libgwengui-cpp0
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-
-Package: libgwengui-fox16-0
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-
-Package: libgwengui-qt5-0
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-
-Package: libgwengui-gtk3-0
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-
-Package: iio-sensor-proxy
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-
-Package: zipmerge
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-
-Package: ziptool
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-
-Package: zipcmp
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-
-Package: python-sip
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-
-Package: libzip-dev
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-
-Package: python-sip-dev
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-
-Package: wayland-protocols
-Pin: release o=Ubuntu
-Pin-Priority: 1100
-' > /etc/apt/preferences.d/99-focal-overrides
-
-printf '
-# SPDX-License-Identifier: GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL
-# SPDX-FileCopyrightText: 2019 Jonathan Riddell <jr@jriddell.org>
-
-Package: base-files
-Pin: origin archive.neon.kde.org
-Pin-Priority: 1100
-' > /etc/apt/preferences.d/99-neon-base-files
 
 apt clean
 apt autoclean
@@ -331,7 +168,7 @@ $INSTALL xserver-xorg-{video-intel,core} xinit alsa-base zram-config mesa-utils
 $INSTALL firefox{,-locale-pt} {opera,google-chrome}-stable chromium{,-l10n}
 $INSTALL okular dolphin{,-plugins} kio-extras sddm synaptic elisa vlc{,-l10n} systemsettings ark
 $INSTALL breeze{,-gtk-theme} po{werdevil,lkit-kde-agent-1} libpam-kwallet5 print-manager gwenview
-$INSTALL audacity lsp-plugins-vst gimp{,-gmic,-data-extras,-plugin-registry} inkscape mkvtoolnix-gui
+$INSTALL audacity lsp-plugins-vst gimp{,-gmic,-data-extras,-plugin-registry} inkscape mkvtoolnix-gui neon-settings-2
 $INSTALL k{menuedit,ate,onsole,win-x11,sysguard,deconnect,infocenter,torrent,screen,denlive,calc,rename,id3-qt,hotkeys,dialog}
 $INSTALL winff-qt ffmpeg{,thumbs} vokoscreen libreoffice-{style-sifr,lightproof-pt-br,calc,writer,l10n-pt-br,{kf,qt}5} u{disks2,power} thermald
 
