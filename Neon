@@ -10,16 +10,14 @@
 ### Para quem gostar de um sistema limpo, basta remover
 ### os softwares escolhidos, tal como os browsers programados.
 ### O Suporte Netflix/PrimeVideo no Chromium depende do Chrome
-### Mas pode ser facilmente corrigo com o mesmo plugin do Brave Browser
+### Mas pode ser facilmente corrigido com o mesmo plugin do Brave Browser
 ### Ou obtido a partir de outra fonte, como o respositório Contrib do Debian, por exemplo.
 
 ### O suporte a Flatpak e Snaps é desabilitado.
-### O KDE Neon é montado aqui como um sistema Híbrido.
-### O repositório User do KDE Neon tem maior preferência.
 ### Repositórios extras são adicionados para manter outros softwares
 ### Instalados ou atualizados. Libreoffice/Audacity e Inkscape, por exemplo.
 ### O Plymouth é removido, por não ser útil. Kernel XanMod é instalado por padrão
-### Se não gosta do XanMod, rremova as linhas necessárias, como também o repositório.
+### Se não gosta do XanMod, remova as linhas necessárias, como também o repositório.
 
 ### Note que o script é focado em hardware Intel.
 ### Se seu hardware for diferente, altere as linhas necessárias.
@@ -32,189 +30,364 @@
 ### Se seu hardware for Intel, apenas faça login e use o wget para obter:
 ### wget http://blog.gustavovalerio.com.br/Neon && chmod +x Neon && ./Neon
 
-### Variáveis
-readonly WGET="wget -qO -"
-readonly KEY="apt-key add -"
-readonly INSTALL="apt install --no-install-recommends -y"
-readonly PPA="apt-key adv --keyserver keyserver.ubuntu.com --recv-keys"
+function clean(){
+    sed 's|^[ \t]*||;/./,$!d' $1
+}
 
-$INSTALL gnupg   #necessário para adicionar repositórios extras
-apt      purge plymouth -y
-apt      clean
-apt      autoclean
-apt      autoremove -y
+function upgrade(){
+    apt -qq clean
+    apt -qq autoclean
+    apt -qq autoremove -y
+    apt -qq update && apt full-upgrade
+}
 
-# Habilitando boot pelo systemd -> Apenas para UEFI
-#bootctl install --path=/boot/efi
-#bootctl update
-#apt purge grub*
-#apt autoremove -y
-#apt install --reinstall efibootmgr
+function set_grub(){
+    # Configurando a inicialização silenciosa
+    # e desabilitando as correções que deixam o sistema lento.
+    # Caso queira as correções ativas, remova o "mitigations=off".
 
-# Obtendo chaves do kernel e browsers
-# Obtendo também a chave do Projeto Neon
-$WGET https://dl.xanmod.org/gpg.key | $KEY
-$WGET https://deb.opera.com/archive.key | $KEY
-$WGET http://archive.neon.kde.org/public.key | $KEY
-$WGET https://dl.google.com/linux/linux_signing_key.pub | $KEY
+    mv -v /etc/default/grub{,.orig}
 
-$PPA 36E81C9267FD1383FCC4490983FBA1751378B444 # Chave Libreoffice
-$PPA 22C4850146603F3DB0ED00479DA4BD18B9A06DE3 # Chave Inkscape Fresh
-$PPA A0062203196CA4482DDB859E4C1CBE14852541CB # Chave UbuntuHandbook - Audacity
-$PPA E6AC16572ED1AD6F96C7EBE01E5F8BBC5BEB10AE # Chave System76 - Somente para Chromium
+    printf '
+        GRUB_DEFAULT=0
+        GRUB_TIMEOUT=0
+        GRUB_TIMEOUT_STYLE=hidden
+        GRUB_CMDLINE_LINUX_DEFAULT="quiet splash=silent"
+        GRUB_DISTRIBUTOR=`lsb_release -i -s 2> /dev/null || echo Debian`
+        GRUB_CMDLINE_LINUX="mitigations=off loglevel=3 vga=current systemd.show_status=false rd.udev.log_priority=3  libahci.ignore_sss=1"
+    ' | clean > /etc/default/grub
+    
+    printf '#KERNEL\nkernel.printk = 3 3 3 3\n\n' > /etc/sysctl.d/99-z-personal.conf 
+}
 
-# Kernel XanMod
-printf 'deb [arch=amd64] http://deb.xanmod.org releases main' > /etc/apt/sources.list.d/xanmod-kernel.list
+function get_apps(){
+    local -r INSTALL="apt install --no-install-recommends -y"
 
-# PPAs
-printf 'deb [arch=amd64] http://ppa.launchpad.net/libreoffice/ppa/ubuntu focal main' > /etc/apt/sources.list.d/libreoffice.list
-printf 'deb [arch=amd64] http://ppa.launchpad.net/inkscape.dev/stable/ubuntu focal main' > /etc/apt/sources.list.d/inkscape.list
-printf 'deb [arch=amd64] http://ppa.launchpad.net/system76/pop/ubuntu focal main' > /etc/apt/sources.list.d/chromium-browser.list
-printf 'deb [arch=amd64] http://ppa.launchpad.net/ubuntuhandbook1/audacity/ubuntu focal main' > /etc/apt/sources.list.d/audacity.list
+    $INSTALL xserver-xorg-{video-intel,core} xinit alsa-base 
+    $INSTALL kde-{spectacle,config-{sddm,gtk-style{,-preview}}} zram-config 
+    $INSTALL linux-xanmod intel-microcode iucode-tool ufw python-is-python3 prel{oad,ink}
+    $INSTALL plasma-{nm,pa,{browser-,}integration,framework,workspace,desktop} mesa-utils
+    $INSTALL firefox{,-locale-pt} {opera,google-chrome}-stable chromium{,-l10n} irqbalance
+    $INSTALL neon-{keyring,settings-2,hardware-integration,language-unpacker,adwaita} liblz4-dev
+    $INSTALL okular dolphin{,-plugins} kio-extras sddm synaptic elisa vlc{,-l10n} systemsettings ark 
+    $INSTALL audacity lsp-plugins-vst gimp{,-gmic,-data-extras,-plugin-registry} inkscape mkvtoolnix-gui
+    $INSTALL breeze{,-gtk-theme} po{werdevil,lkit-kde-agent-1} libpam-kwallet5 print-manager gwenview thermald
+    $INSTALL k{menuedit,ate,onsole,win-x11,sysguard,deconnect,infocenter,torrent,screen,denlive,calc,rename,id3-qt,hotkeys,dialog}
+    $INSTALL winff-qt ffmpeg{,thumbs} vokoscreen libreoffice-{style-sifr,lightproof-pt-br,calc,writer,l10n-pt-br,{kf,qt}5} u{disks2,power}
+}
 
-# Browsers
-printf 'deb [arch=amd64] https://deb.opera.com/opera-stable/ stable non-free' > /etc/apt/sources.list.d/opera-stable.list
-printf 'deb [arch=amd64] https://dl.google.com/linux/chrome/deb/ stable main' > /etc/apt/sources.list.d/google-chrome.list
+function get_keys(){
 
-# Reorganizando repositórios do Ubuntu
-rm -f /etc/apt/sources.list
-printf '# Canonical Partners
-deb [arch=amd64] http://archive.canonical.com/ubuntu/ focal partner
-' > /etc/apt/sources.list.d/canonical-partners.list
+    local -r WGET="wget -qO -"
+    local -r KEY="apt-key add -"
+    local -r PPA="apt-key adv --keyserver keyserver.ubuntu.com --recv-keys"
 
-printf '# Ubuntu Repos Standards
-deb [arch=amd64] http://br.archive.ubuntu.com/ubuntu/ focal main restricted universe multiverse
-' > /etc/apt/sources.list.d/ubuntu-standards.list
+    #Necessário para adicionar repositórios extras
+    printf 'Obtendo o gerenciador de chaves gpg... '
+    apt -qq install gnupg --no-install-recommends
 
-printf '# Ubuntu Security
-deb [arch=amd64] http://security.ubuntu.com/ubuntu/ focal-security main restricted universe multiverse
-' > /etc/apt/sources.list.d/ubuntu-security.list
+    # Obtendo chaves do kernel e browsers
+    # Obtendo também a chave do Projeto Neon
+    printf 'Obtendo chave XanMod...      '
+    $WGET https://dl.xanmod.org/gpg.key | $KEY
+    
+    printf 'Obtendo chave Opera...       '
+    $WGET https://deb.opera.com/archive.key | $KEY
+    
+    printf 'Obtendo chave Neon...        '
+    $WGET http://archive.neon.kde.org/public.key | $KEY
+    
+    printf 'Obtendo chave Chrome...      '
+    $WGET https://dl.google.com/linux/linux_signing_key.pub | $KEY
 
-printf '# Ubuntu Repos Standards Updates
-deb [arch=amd64] http://br.archive.ubuntu.com/ubuntu/ focal-updates main restricted universe multiverse
-' > /etc/apt/sources.list.d/ubuntu-updates.list
+    printf 'Obtendo chaves PPAs...\n'
+    $PPA 36E81C9267FD1383FCC4490983FBA1751378B444 ### Chave Libreoffice
+    $PPA 22C4850146603F3DB0ED00479DA4BD18B9A06DE3 ### Chave Inkscape Fresh
+    $PPA A0062203196CA4482DDB859E4C1CBE14852541CB ### Chave UbuntuHandbook - Audacity
+    $PPA E6AC16572ED1AD6F96C7EBE01E5F8BBC5BEB10AE ### Chave System76 - Somente para Chromium
+}
 
-printf '# Ubuntu Backports
-deb [arch=amd64] http://br.archive.ubuntu.com/ubuntu/ focal-backports main restricted universe multiverse
-' > /etc/apt/sources.list.d/ubuntu-backports.list
+function get_repos(){
+    # Kernel XanMod
+    printf 'deb [arch=amd64] http://deb.xanmod.org releases main' > /etc/apt/sources.list.d/xanmod-kernel.list
+    
+    # Repo KDE Neon User
+    printf '#Neon User\ndeb [arch=amd64] http://archive.neon.kde.org/user/ focal main' > /etc/apt/sources.list.d/neon.list
 
-printf '#Neon User
-deb [arch=amd64] http://archive.neon.kde.org/user/ focal main
-' > /etc/apt/sources.list.d/neon.list
+    # Browsers
+    printf 'deb [arch=amd64] https://deb.opera.com/opera-stable/ stable non-free' > /etc/apt/sources.list.d/opera-stable.list
+    printf 'deb [arch=amd64] https://dl.google.com/linux/chrome/deb/ stable main' > /etc/apt/sources.list.d/google-chrome.list
 
-#Adicionando travas
+    # PPAs
+    printf 'deb [arch=amd64] http://ppa.launchpad.net/libreoffice/ppa/ubuntu focal main' > /etc/apt/sources.list.d/libreoffice.list
+    printf 'deb [arch=amd64] http://ppa.launchpad.net/inkscape.dev/stable/ubuntu focal main' > /etc/apt/sources.list.d/inkscape.list
+    printf 'deb [arch=amd64] http://ppa.launchpad.net/system76/pop/ubuntu focal main' > /etc/apt/sources.list.d/chromium-browser.list
+    printf 'deb [arch=amd64] http://ppa.launchpad.net/ubuntuhandbook1/audacity/ubuntu focal main' > /etc/apt/sources.list.d/audacity.list
+}
 
-# Impede instalação do Plymouth
-printf '
-Package: *plymouth*
-Pin: release *
-Pin-Priority: -1
-' > /etc/apt/preferences.d/10-plymouth
+function set_repos(){
+    # Reorganizando repositórios do Ubuntu
+    rm -f /etc/apt/sources.list
 
-# Impede instalação do Packagekit
-printf '
-Package: packagekit
-Pin: release *
-Pin-Priority: -1
-' > /etc/apt/preferences.d/20-packagekit
+    printf '
+        # Canonical Partners
+        deb [arch=amd64] http://archive.canonical.com/ubuntu/ focal partner
+    ' | clean > /etc/apt/sources.list.d/canonical-partners.list
 
-# Bloqueando pacotes não-nativos
-# Impede instalação de softwares Snaps
-printf '
-Package: snapd
-Pin: release *
-Pin-Priority: -1
-' > /etc/apt/preferences.d/30-snap
+    printf '
+        # Ubuntu Repos Standards
+        deb [arch=amd64] http://br.archive.ubuntu.com/ubuntu/ focal main restricted universe multiverse
+    ' | clean > /etc/apt/sources.list.d/ubuntu-standards.list
 
-# Impede instalação de softwares Flatpaks
-printf '
-Package: flatpak
-Pin: release *
-Pin-Priority: -1
-' > /etc/apt/preferences.d/40-flatpak
+    printf '
+        # Ubuntu Security
+        deb [arch=amd64] http://security.ubuntu.com/ubuntu/ focal-security main restricted universe multiverse
+    ' | clean > /etc/apt/sources.list.d/ubuntu-security.list
 
-# Impede instalação do akonadi
-printf '
-Package: akonadi-server
-Pin: release *
-Pin-Priority: -1
-' > /etc/apt/preferences.d/50-akonadi
+    printf '
+        # Ubuntu Repos Standards Updates
+        deb [arch=amd64] http://br.archive.ubuntu.com/ubuntu/ focal-updates main restricted universe multiverse
+    ' | clean > /etc/apt/sources.list.d/ubuntu-updates.list
 
-# Libera apenas apenas o Chromium do repositório System76/Pop
-printf '
-Package: *
-Pin: release o=LP-PPA-system76-pop
-Pin-Priority: -1
+    printf '
+        # Ubuntu Backports
+        deb [arch=amd64] http://br.archive.ubuntu.com/ubuntu/ focal-backports main restricted universe multiverse
+    ' | clean > /etc/apt/sources.list.d/ubuntu-backports.list
+}
 
-Package: *chromium*
-Pin: release o=LP-PPA-system76-pop
-Pin-Priority: 1100
-' > /etc/apt/preferences.d/60-chromium
+function lock_apps(){
+    # Impede instalação do Plymouth
+    # Plymouth pode ser belo, mas atrasa o boot.
+    printf '
+        Package: plymouth*
+        Pin: release *
+        Pin-Priority: -1
+    ' | clean > /etc/apt/preferences.d/10-plymouth
 
-apt clean
-apt autoclean
-apt update
-apt full-upgrade -y
+    # Impede instalação do Packagekit
+    printf '
+        Package: packagekit*
+        Pin: release *
+        Pin-Priority: -1
+    ' | clean > /etc/apt/preferences.d/10-packagekit
 
-$INSTALL linux-xanmod intel-microcode iucode-tool ufw python-is-python3 prel{oad,ink}
+    # Bloqueando pacotes não-nativos
+    # Impede instalação de softwares Snaps
+    printf '
+        Package: snapd*
+        Pin: release *
+        Pin-Priority: -1
+    ' | clean > /etc/apt/preferences.d/10-snap
 
-###KDE Connect
-ufw allow 1714:1764/tcp
-ufw allow 1714:1764/udp
+    # Impede instalação de softwares Flatpaks
+    printf '
+        Package: flatpak*
+        Pin: release *
+        Pin-Priority: -1
+    ' | clean > /etc/apt/preferences.d/10-flatpak
 
-$INSTALL kde-{spectacle,config-{sddm,gtk-style{,-preview}}}
-$INSTALL plasma-{nm,pa,{browser-,}integration,framework,workspace,desktop}
-$INSTALL xserver-xorg-{video-intel,core} xinit alsa-base zram-config mesa-utils
-$INSTALL firefox{,-locale-pt} {opera,google-chrome}-stable chromium{,-l10n} irqbalance
-$INSTALL okular dolphin{,-plugins} kio-extras sddm synaptic elisa vlc{,-l10n} systemsettings ark 
-$INSTALL breeze{,-gtk-theme} po{werdevil,lkit-kde-agent-1} libpam-kwallet5 print-manager gwenview  thermald
-$INSTALL audacity lsp-plugins-vst gimp{,-gmic,-data-extras,-plugin-registry} inkscape mkvtoolnix-gui neon-settings-2
-$INSTALL k{menuedit,ate,onsole,win-x11,sysguard,deconnect,infocenter,torrent,screen,denlive,calc,rename,id3-qt,hotkeys,dialog}
-$INSTALL winff-qt ffmpeg{,thumbs} vokoscreen libreoffice-{style-sifr,lightproof-pt-br,calc,writer,l10n-pt-br,{kf,qt}5} u{disks2,power}
+    # Impede instalação do Akonadi
+    # Isso também impede a instalação
+    # De softwares que dependem dele. São um peso!
+    printf '
+        Package: akonadi*
+        Pin: release *
+        Pin-Priority: -1
+    ' | clean > /etc/apt/preferences.d/10-akonadi
 
-sed -i 's/memfree = 50/memfree = 100/g'         /etc/preload.conf
-sed -i 's/memcached = 0/memcached = 30/g'       /etc/preload.conf
-sed -i 's/memcached = 0/memcached = 30/g'       /etc/preload.conf
-sed -i 's/PRELINKING=unknown/PRELINKING=yes/g'  /etc/default/prelink
-sed -i 's/COMPRESS=lz4/COMPRESS=gzip/g'         /etc/initramfs-tools/initramfs.conf
+    # Libera apenas apenas o Chromium do repositório System76/Pop
+    # Pois o mesmo contém atualizações de vários softwares para o Pop!_Os
+    # Incluindo a atualização do Systemd, kernel e outros softwares do Gnome.
+    printf '
+        Package: *
+        Pin: release o=LP-PPA-system76-pop
+        Pin-Priority: -1
 
-# Suporte Netflix/PrimeVideo a partir da lib do Chrome
-cp -rv /opt/google/chrome/WidevineCdm/ /usr/lib/chromium/
-cp -rv /opt/google/chrome/WidevineCdm/ /usr/lib/x86_64-linux-gnu/opera/
+        Package: *chromium*
+        Pin: release o=LP-PPA-system76-pop
+        Pin-Priority: 1100
+    ' | clean > /etc/apt/preferences.d/10-chromium
+}
 
-cp -v /usr/share/systemd/tmp.mount /etc/systemd/system/
-systemctl disable NetworkManager-wait-online.service
-systemctl enable tmp.mount upower
+function set_network(){
+    ### Corrigindo o problema de rede não gerenciável pós-instalação:
 
-ufw enable
+    if [ ! -d "/etc/network" ]; then
+        mkdir -p /etc/network # Às vezes o sistema não cria -> Bug?
+    else
+        mv /etc/network/interfaces{,.orig}
+    fi
+
+    mv /etc/netplan/01-netcfg.yaml{,.orig}
+    cp /etc/NetworkManager/NetworkManager.conf{,.orig}
+    printf 'auto lo\niface lo inet loopback' > /etc/network/interfaces
+    sed -i 's/managed=false/managed=true/g' /etc/NetworkManager/NetworkManager.conf
+    printf 'network:\n  version: 2\n  renderer: NetworkManager' > /etc/netplan/02-network-manager-all.yaml
+}
+
+function other_settings(){
+    ###KDE Connect
+    ufw allow 1714:1764/tcp
+    ufw allow 1714:1764/udp
+
+    sed -i 's/memfree = 50/memfree = 100/g'         /etc/preload.conf
+    sed -i 's/memcached = 0/memcached = 30/g'       /etc/preload.conf
+    sed -i 's/processes = 30/processes = 60/g'      /etc/preload.conf
+    sed -i 's/PRELINKING=unknown/PRELINKING=yes/g'  /etc/default/prelink
+    
+    # Executando o Prelink automaticamente a cada instalação
+    printf 'export KDE_IS_PRELINKED=1' > /etc/profile.d/prelink.sh
+    printf 'DPkg::Post-Invoke {"sleep 2;/usr/sbin/prelink -amR";}' > /etc/apt/apt.conf.d/10-prelink.conf
+
+    # Suporte Netflix/PrimeVideo a partir da lib do Chrome
+    cp -r /opt/google/chrome/WidevineCdm/ /usr/lib/chromium/
+    cp -r /opt/google/chrome/WidevineCdm/ /usr/lib/x86_64-linux-gnu/opera/
+    
+    # Habilita o cache na RAM, melhora o desempenho do sistema.
+    cp /usr/share/systemd/tmp.mount /etc/systemd/system/
+    systemctl enable tmp.mount
+    
+    # Upower é usado amplamente pelo sistema,
+    # Para acelerar o boot, ativamos o mesmo, assim evitamos checagens futuras.
+    systemctl enable upower
+    systemctl disable NetworkManager-wait-online.service
+    
+    # O sistema não cria um atalho para o WinFF. (bug desde o Ubuntu 16)
+    if [[ ! -f /usr/share/applications/winff.desktop ]]; then
+        printf '
+            [Desktop Entry]
+            Comment=
+            Exec=winff-qt
+            Icon=winff
+            Name=WinFF
+            NoDisplay=false
+            Path[$e]=
+            StartupNotify=true
+            Terminal=0
+            TerminalOptions=
+            Type=Application
+            X-KDE-SubstituteUID=false
+            X-KDE-Username=
+        ' | clean > /usr/share/applications/winff.desktop
+    fi
+    prelink -amvR # Prelinkando usando randomização de binários. (+ seguro)
+    systemctl enable ufw && ufw enable # Às vezes o Systemd não ativa o serviço
+}
+
+function optimize_system(){
+    local -r SYSCTL='/etc/sysctl.d/99-z-personal.conf'
+    local -r DISK_TYPE=$(cat /sys/block/sda/queue/rotational)
+    local -r MEM=$(awk '/MemTotal:/ { printf "%0.f",$2/1000/1000 }' /proc/meminfo)
+    
+    printf '
+        #CORE
+        net.core.default_qdisc = cake
+        net.core.netdev_max_backlog = 16384
+        net.core.optmem_max = 65536
+        net.core.rmem_default = 1048576
+        net.core.rmem_max = 16777216
+        net.core.somaxconn = 8192
+        net.core.wmem_default = 1048576
+        net.core.wmem_max = 16777216
+        
+        #IPV4
+        net.ipv4.conf.all.accept_redirects = 0
+        net.ipv4.conf.all.log_martians = 1
+        net.ipv4.conf.all.secure_redirects = 0
+        net.ipv4.conf.all.send_redirects = 0
+        net.ipv4.conf.default.accept_redirects = 0
+        net.ipv4.conf.default.log_martians = 1
+        net.ipv4.conf.default.rp_filter = 0
+        net.ipv4.conf.default.secure_redirects = 0
+        net.ipv4.conf.default.send_redirects = 0
+        net.ipv4.icmp_echo_ignore_all = 1
+        net.ipv4.ip_local_port_range = 1024 65535
+        net.ipv4.tcp_congestion_control = bbr
+        net.ipv4.tcp_fastopen = 3
+        net.ipv4.tcp_fin_timeout = 10
+        net.ipv4.tcp_keepalive_intvl = 10
+        net.ipv4.tcp_keepalive_probes = 6
+        net.ipv4.tcp_keepalive_time = 60
+        net.ipv4.tcp_max_syn_backlog = 8192
+        net.ipv4.tcp_max_tw_buckets = 2000000
+        net.ipv4.tcp_mtu_probing = 1
+        net.ipv4.tcp_rfc1337 = 1
+        net.ipv4.tcp_rmem = 4096 1048576 2097152
+        net.ipv4.tcp_slow_start_after_idle = 0
+        net.ipv4.tcp_synack_retries = 3
+        net.ipv4.tcp_syncookies = 0
+        net.ipv4.tcp_syn_retries = 3
+        net.ipv4.tcp_timestamps = 1
+        net.ipv4.tcp_tw_reuse = 1
+        net.ipv4.tcp_window_scaling = 1
+        net.ipv4.tcp_wmem = 4096 65536 16777216
+        net.ipv4.udp_rmem_min = 8192
+        net.ipv4.udp_wmem_min = 8192
+        
+        #VM
+        vm.vfs_cache_pressure = 50
+    ' | clean >> $SYSCTL
+    
+    if [[ $MEM -le 2 ]]; then
+        printf 'vm.swappiness = 10\n' >> $SYSCTL
+    elif [[ $MEM -le 4 ]]; then
+        printf 'vm.swappiness = 5\n' >> $SYSCTL
+    elif [[ $MEM -le 8 ]]; then
+        printf 'vm.swappiness = 3\n' >> $SYSCTL
+    elif [[ $MEM -le 12 ]]; then
+        printf 'vm.swappiness = 2\n' >> $SYSCTL
+    elif [[ $MEM -le 16 ]]; then
+        printf 'vm.swappiness = 1\n' >> $SYSCTL
+    else
+        # Desabilita o uso da swap
+        # Em sistemas com mais de 16Gb de RAM.
+        printf 'vm.swappiness = 0\n' >> $SYSCTL
+    fi
 
 
-### Corrigindo o problema de rede não gerenciável pós-instalação:
-mkdir -p /etc/network/ #às vezes o sistema não cria -> Bug?
-mv -v /etc/network/interfaces{,.orig}
-printf 'auto lo\niface lo inet loopback' > /etc/network/interfaces
+    if [[ $DISK_TYPE -eq 0 ]]; then
+        #SSD
+        printf '
+            vm.dirty_background_ratio = 3
+            vm.dirty_ratio = 5
+        ' | clean >> $SYSCTL
 
-cp -rv /etc/NetworkManager/NetworkManager.conf{,.orig}
-sed -i 's/managed=false/managed=true/g' /etc/NetworkManager/NetworkManager.conf
+        # O Ubuntu ativa o trim por padrão
+        # Mas já houve casos de não habilitar.
+        systemctl enable fstrim.timer
+    else
+        #HDD
+        printf '
+            vm.dirty_background_ratio = 5
+            vm.dirty_ratio = 15
+        ' | clean >> $SYSCTL
+    fi
+}
 
-mv -v /etc/netplan{,.orig}/
-mkdir /etc/netplan
-printf 'network:\n  version: 2\n  renderer: NetworkManager' > /etc/netplan/01-network-manager-all.yaml
-
-mv -v /etc/default/grub{,.orig}
-printf '#Grub Settings
-GRUB_DEFAULT=0
-GRUB_TIMEOUT=0
-GRUB_TIMEOUT_STYLE=hidden
-GRUB_CMDLINE_LINUX_DEFAULT="quiet splash=silent"
-GRUB_DISTRIBUTOR=`lsb_release -i -s 2> /dev/null || echo Debian`
-GRUB_CMDLINE_LINUX="mitigations=off loglevel=3 vga=current systemd.show_status=false rd.udev.log_priority=3  libahci.ignore_sss=1"
-' > /etc/default/grub
-
-#Executando o Prelink automaticamente a cada instalação
-printf 'export KDE_IS_PRELINKED=1' > /etc/profile.d/prelink.sh
-printf 'DPkg::Post-Invoke {"/usr/sbin/prelink -amR";}' >> /etc/apt/apt.conf
-
-prelink -amvR
-update-grub
-reboot
+if [[ "$1" == "exec" ]] && [[ $UID -eq 0 ]]; then
+    apt -qq purge plymouth -y
+    get_keys
+    get_repos
+    set_repos
+    upgrade
+    lock_apps
+    get_apps
+    set_grub
+    set_network
+    other_settings
+    optimize_system    
+    update-grub
+    update-initramfs -c -k all
+    sleep 5
+    reboot
+elif [[ $UID -eq 0 ]]; then
+    # Corrige o timeout do sudo.
+    # Se a conexão do usuário for lenta,
+    # o script demorará mais que o tempo permitido
+    # para a execução do SUDO. Para evitar o timeout,
+    # chamamos o script novamente mudando os poderes do sudo.
+    sudo su -c "$0 exec"
+else
+    printf 'Precisa ser root!\n'
+    exit 255
+fi
