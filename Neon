@@ -237,7 +237,7 @@ function other_settings(){
     
     # Executando o Prelink automaticamente a cada instalação
     printf 'export KDE_IS_PRELINKED=1' > /etc/profile.d/prelink.sh
-    printf 'DPkg::Post-Invoke {"sleep 2;/usr/sbin/prelink -amR";}' > /etc/apt/apt.conf.d/10-prelink.conf
+    printf 'DPkg::Post-Invoke {"sleep 2;/usr/sbin/prelink -amR";}' > /etc/apt/apt.conf.d/10-prelink
 
     # Suporte Netflix/PrimeVideo a partir da lib do Chrome
     cp -r /opt/google/chrome/WidevineCdm/ /usr/lib/chromium/
