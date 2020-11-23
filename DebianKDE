@@ -167,7 +167,7 @@ function get_essentials(){
         get xserver-xorg-video-all
     fi
     
-    get pulseaudio{,-utils} xinit wget nano xauth xserver-xorg-core irqbalance ufw thermald
+    get pulseaudio{,-utils} xinit nano xauth xserver-xorg-core irqbalance ufw thermald
 }
 
 function optimize_system(){
