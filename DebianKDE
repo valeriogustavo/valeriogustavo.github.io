@@ -1,0 +1,333 @@
+#!/bin/bash
+###############################################################################
+## Pode ser obtido pelo bash: wget blog.gustavovalerio.com.br/DebianKDE      ##
+## Script hospedado no Github: github.com/valeriogustavo                     ##
+## Scrip de instalação do KDE Plasma Desktop Mínimo                          ##
+## A partir do Debian Testing Netboot Básico.                                ##
+## Escrito por Gustavo Valério Ferreira                                      ##
+## gustavovalerio.com.br                                                     ##
+## 23/11/2020 - V 0.1                                                        ##
+###############################################################################
+
+function get(){
+    apt install --no-install-recommends $*
+}
+
+function clean(){
+    sed 's|^[ \t]*||;/./,$!d' $1
+}
+
+function get_keys(){
+    local -r WGET="wget -qO -"
+    local -r KEY="apt-key add -"
+
+    get wget gnupg ca-certificates
+    
+    $WGET https://dl.xanmod.org/gpg.key | $KEY
+    $WGET https://deb.opera.com/archive.key | $KEY
+    $WGET https://dl.google.com/linux/linux_signing_key.pub | $KEY
+}
+
+function get_apps(){
+    get linux-xanmod
+    get {opera,google-chrome}-stable chromium{,-l10n}
+    get gimp{,-gmic,-data-extras,-plugin-registry} inkscape
+    get libreoffice-{style-sifr,calc,writer,{l10n,lightproof}-pt-br,{kf,qt}5}
+    get audacity calf-plugins mkvtoolnix-gui vokoscreen winff-qt elisa vlc{,-l10n}
+    
+}
+
+function set_grub(){
+    # Configurando a inicialização silenciosa
+    # e desabilitando as correções que deixam o sistema lento.
+    # Caso queira as correções ativas, remova o "mitigations=off".
+
+    mv -v /etc/default/grub{,.orig}
+
+    printf '
+        GRUB_DEFAULT=0
+        GRUB_TIMEOUT=0
+        GRUB_TIMEOUT_STYLE=hidden
+        GRUB_CMDLINE_LINUX_DEFAULT="quiet splash=silent"
+        GRUB_DISTRIBUTOR=`lsb_release -i -s 2> /dev/null || echo Debian`
+        GRUB_CMDLINE_LINUX="mitigations=off loglevel=3 vga=current systemd.show_status=false rd.udev.log_priority=3  libahci.ignore_sss=1"
+    ' | clean > /etc/default/grub
+    
+    printf '#KERNEL\nkernel.printk = 3 3 3 3\n\n' > /etc/sysctl.d/99-z-personal.conf 
+}
+
+function lock_apps(){
+    # Impede instalação do Plymouth
+    # Plymouth pode ser belo, mas atrasa o boot.
+    printf '
+        Package: plymouth*
+        Pin: release *
+        Pin-Priority: -1
+    ' | clean > /etc/apt/preferences.d/10-plymouth
+
+    # Impede instalação do Packagekit
+    printf '
+        Package: packagekit*
+        Pin: release *
+        Pin-Priority: -1
+    ' | clean > /etc/apt/preferences.d/10-packagekit
+
+    # Bloqueando pacotes não-nativos
+    # Impede instalação de softwares Snaps
+    printf '
+        Package: snapd*
+        Pin: release *
+        Pin-Priority: -1
+    ' | clean > /etc/apt/preferences.d/10-snap
+
+    # Impede instalação de softwares Flatpaks
+    printf '
+        Package: flatpak*
+        Pin: release *
+        Pin-Priority: -1
+    ' | clean > /etc/apt/preferences.d/10-flatpak
+
+    # Impede instalação do Akonadi
+    # Isso também impede a instalação
+    # De softwares que dependem dele. São um peso!
+    printf '
+        Package: akonadi*
+        Pin: release *
+        Pin-Priority: -1
+    ' | clean > /etc/apt/preferences.d/10-akonadi
+
+    # Diminuímos a prioridade
+    # de todos os pacotes instáveis.
+    printf '
+        Package: *
+        Pin: release a=unstable
+        Pin-Priority: 400
+    ' | clean > /etc/apt/preferences.d/10-unstable
+
+    # Desativamos o autoupdate,
+    # Setamos a release principal
+    # E aumentamos o cache do apt.
+    printf '
+        APT::Periodic::Enable "0";
+        APT::Cache-Limit "100000000";
+        APT::Default-Release "testing";
+        APT::Periodic::Unattended-Upgrade "0";
+        APT::Periodic::Update-Package-Lists "0";
+    ' | clean > /etc/apt/apt.conf.d/99-apt
+}
+
+function set_repos(){
+    rm -f /etc/apt/sources.list
+    
+    printf '
+        deb [arch=amd64] http://deb.xanmod.org releases main
+    ' | clean > /etc/apt/sources.list.d/xanmod-kernel.list
+    
+    printf '
+        deb [arch=amd64] https://deb.opera.com/opera-stable stable non-free
+    ' | clean > /etc/apt/sources.list.d/opera-stable.list
+    
+    printf '
+        deb [arch=amd64] https://dl.google.com/linux/chrome/deb stable main
+    ' | clean > /etc/apt/sources.list.d/google-chrome.list
+
+    printf '
+        deb [arch=amd64] http://deb.debian.org/debian testing main contrib non-free
+    ' | clean > /etc/apt/sources.list.d/testing-all.list
+
+    printf '
+        deb [arch=amd64] http://deb.debian.org/debian unstable main contrib non-free
+    ' | clean > /etc/apt/sources.list.d/unstable-all.list
+    
+    printf '
+        deb [arch=amd64] http://security.debian.org/debian-security testing-security main contrib non-free
+    ' | clean > /etc/apt/sources.list.d/testing-security.list
+}
+
+function clean_system(){
+    apt clean
+    apt autoclean -y
+    apt autoremove -y
+}
+
+function system_upgrade(){
+    apt -qq update
+    apt full-upgrade
+}
+
+function get_essentials(){
+    local -r AMD=$(grep -i 'amd' /proc/cpuinfo | wc -l)
+    local -r INTEL=$(grep -i 'intel' /proc/cpuinfo | wc -l)
+    
+    if   [[ $AMD -gt 0 ]]; then
+        get xserver-xorg-video-{amdgpu,ati,radeon} amd64-microcode
+    elif [[ $INTEL -gt 0 ]]; then
+        get xserver-xorg-video-intel intel-microcode iucode-tool mesa-utils
+    else
+        get xserver-xorg-video-all
+    fi
+    
+    get pulseaudio{,-utils} xinit wget nano xauth xserver-xorg-core irqbalance ufw thermald
+}
+
+function optimize_system(){
+    local -r SYSCTL='/etc/sysctl.d/99-z-personal.conf'
+    local -r DISK_TYPE=$(cat /sys/block/sda/queue/rotational)
+    local -r MEM=$(awk '/MemTotal:/ { printf "%0.f",$2/1000/1000 }' /proc/meminfo)
+
+    # Desativando e mascarando serviços desnecessários
+    systemctl disable --now apt-daily{,-upgrade}{.service,.timer} NetworkManager-wait-online.service
+    systemctl mask apt-daily{,-upgrade}{.service,.timer} NetworkManager-wait-online.service    
+    systemctl enable ufw && ufw enable # Systemd às vezes não inicia o UFW
+
+    get prel{oad,ink}
+    
+    # Liberando portas para o KDE Connect
+    ufw allow 1714:1764/tcp
+    ufw allow 1714:1764/udp
+
+    # Configurando Preload e Prelink
+    sed -i 's/memfree = 50/memfree = 100/g'         /etc/preload.conf
+    sed -i 's/memcached = 0/memcached = 30/g'       /etc/preload.conf
+    sed -i 's/processes = 30/processes = 60/g'      /etc/preload.conf
+    sed -i 's/PRELINKING=unknown/PRELINKING=yes/g'  /etc/default/prelink
+    
+    # Avisando ao KDE que ele está prelinkado
+    printf 'export KDE_IS_PRELINKED=1' > /etc/profile.d/prelink.sh
+
+    # Configurando o DPKG para executar o Prelink
+    # Sempre que houver remoção ou instalação de pacotes
+    printf 'DPkg::Post-Invoke {"sleep 2;/usr/sbin/prelink -amR";}' > /etc/apt/apt.conf.d/10-prelink
+
+    printf '
+        #CORE
+        net.core.default_qdisc = cake
+        net.core.netdev_max_backlog = 16384
+        net.core.optmem_max = 65536
+        net.core.rmem_default = 1048576
+        net.core.rmem_max = 16777216
+        net.core.somaxconn = 8192
+        net.core.wmem_default = 1048576
+        net.core.wmem_max = 16777216
+        
+        #IPV4
+        net.ipv4.conf.all.accept_redirects = 0
+        net.ipv4.conf.all.log_martians = 1
+        net.ipv4.conf.all.secure_redirects = 0
+        net.ipv4.conf.all.send_redirects = 0
+        net.ipv4.conf.default.accept_redirects = 0
+        net.ipv4.conf.default.log_martians = 1
+        net.ipv4.conf.default.rp_filter = 0
+        net.ipv4.conf.default.secure_redirects = 0
+        net.ipv4.conf.default.send_redirects = 0
+        net.ipv4.icmp_echo_ignore_all = 1
+        net.ipv4.ip_local_port_range = 1024 65535
+        net.ipv4.tcp_congestion_control = bbr
+        net.ipv4.tcp_fastopen = 3
+        net.ipv4.tcp_fin_timeout = 10
+        net.ipv4.tcp_keepalive_intvl = 10
+        net.ipv4.tcp_keepalive_probes = 6
+        net.ipv4.tcp_keepalive_time = 60
+        net.ipv4.tcp_max_syn_backlog = 8192
+        net.ipv4.tcp_max_tw_buckets = 2000000
+        net.ipv4.tcp_mtu_probing = 1
+        net.ipv4.tcp_rfc1337 = 1
+        net.ipv4.tcp_rmem = 4096 1048576 2097152
+        net.ipv4.tcp_slow_start_after_idle = 0
+        net.ipv4.tcp_synack_retries = 3
+        net.ipv4.tcp_syncookies = 0
+        net.ipv4.tcp_syn_retries = 3
+        net.ipv4.tcp_timestamps = 1
+        net.ipv4.tcp_tw_reuse = 1
+        net.ipv4.tcp_window_scaling = 1
+        net.ipv4.tcp_wmem = 4096 65536 16777216
+        net.ipv4.udp_rmem_min = 8192
+        net.ipv4.udp_wmem_min = 8192
+        
+        #VM
+        vm.vfs_cache_pressure = 50
+    ' | clean >> $SYSCTL
+
+    if [[ $MEM -le 2 ]]; then
+        printf 'vm.swappiness = 10\n' >> $SYSCTL
+    elif [[ $MEM -le 4 ]]; then
+        printf 'vm.swappiness = 5\n' >> $SYSCTL
+    elif [[ $MEM -le 8 ]]; then
+        printf 'vm.swappiness = 3\n' >> $SYSCTL
+    elif [[ $MEM -le 12 ]]; then
+        printf 'vm.swappiness = 2\n' >> $SYSCTL
+    elif [[ $MEM -le 16 ]]; then
+        printf 'vm.swappiness = 1\n' >> $SYSCTL
+    else
+        # Desabilita o uso da swap
+        # Em sistemas com mais de 16Gb de RAM.
+        printf 'vm.swappiness = 0\n' >> $SYSCTL
+    fi
+
+
+    if [[ $DISK_TYPE -eq 0 ]]; then
+        #SSD
+        printf '
+            vm.dirty_background_ratio = 3
+            vm.dirty_ratio = 5
+        ' | clean >> $SYSCTL
+
+        # O Debian ativa o trim por padrão
+        # Mas, por garantia, melhor habilitar.
+        systemctl enable fstrim.timer
+    else
+        #HDD
+        printf '
+            vm.dirty_background_ratio = 5
+            vm.dirty_ratio = 15
+        ' | clean >> $SYSCTL
+    fi
+    
+    # Executamos o Prelink com a opção -R ativa
+    # Isso ramdomiza os binários e melhora a segurança.
+    prelink -amvR
+}
+
+function get_plasma_desktop(){
+    get plasma-{nm,pa,{browser-,}integration,framework,workspace,desktop}
+    get kde-{spectacle,config-{sddm,gtk-style{,-preview}}} systemsettings
+    get k{init,ate,onsole,win-x11,sysguard,screen,hotkeys,dialog,id3-qt}
+    get k{menuedit,deconnect,infocenter,torrent,denlive,calc,rename}
+    get po{werdevil,lkit-kde-agent-1} dolphin{,-plugins} gwenview
+    get kio-extras sddm ark print-manager ffmpegthumbs okular
+}
+
+
+if [[ "$1" == "exec" ]] && [[ $UID -eq 0 ]]; then
+    # Se usa o Vim, comente a linha abaixo :)
+    apt -qq update
+    apt purge vim-{tiny,common} -y
+
+    set_grub
+    get_keys
+    set_repos
+    lock_apps
+    clean_system
+    system_upgrade
+    get_essentials
+    get_plasma_desktop
+     
+    get_apps
+    optimize_system
+    
+    update-grub
+    update-initramfs -c -k all
+ 
+    sleep 10
+    systemctl reboot
+elif [[ $UID -eq 0 ]]; then
+    # Corrige o timeout do sudo.
+    # Se a conexão do usuário for lenta,
+    # o script demorará mais que o tempo permitido
+    # para a execução do SUDO. Para evitar o timeout,
+    # chamamos o script novamente mudando os poderes do sudo.
+    sudo su -c "$0 exec"
+else
+    printf 'Precisa ser root!\n'
+    exit 255
+fi
