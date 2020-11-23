@@ -104,7 +104,7 @@ function get_keys(){
     $PPA 36E81C9267FD1383FCC4490983FBA1751378B444 ### Chave Libreoffice
     $PPA 22C4850146603F3DB0ED00479DA4BD18B9A06DE3 ### Chave Inkscape Fresh
     $PPA A0062203196CA4482DDB859E4C1CBE14852541CB ### Chave UbuntuHandbook - Audacity
-    $PPA E6AC16572ED1AD6F96C7EBE01E5F8BBC5BEB10AE ### Chave System76 - Somente para Chromium
+    $PPA E6AC16572ED1AD6F96C7EBE01E5F8BBC5BEB10AE ### Chave System76 - Somente para Chromium/Virtualbox
 }
 
 function get_repos(){
@@ -195,9 +195,9 @@ function lock_apps(){
         Pin-Priority: -1
     ' | clean > /etc/apt/preferences.d/10-akonadi
 
-    # Libera apenas apenas o Chromium do repositório System76/Pop
-    # Pois o mesmo contém atualizações de vários softwares para o Pop!_Os
-    # Incluindo a atualização do Systemd, kernel e outros softwares do Gnome.
+    # Libera apenas apenas o Chromium/Virtualbox do repositório System76/Pop
+    # Pois o mesmo contém grandes atualizações de vários softwares para o Pop!_Os
+    # Incluindo a atualização do Systemd, kernel, Virtualbox e outros softwares do Gnome.
     printf '
         Package: *
         Pin: release o=LP-PPA-system76-pop
@@ -206,13 +206,17 @@ function lock_apps(){
         Package: *chromium*
         Pin: release o=LP-PPA-system76-pop
         Pin-Priority: 1100
-    ' | clean > /etc/apt/preferences.d/10-chromium
+
+        Package: *virtualbox*
+        Pin: release o=LP-PPA-system76-pop
+        Pin-Priority: 1100
+    ' | clean > /etc/apt/preferences.d/10-system76
 }
 
 function set_network(){
     ### Corrigindo o problema de rede não gerenciável pós-instalação:
 
-    if [ ! -d "/etc/network" ]; then
+    if [[ ! -d "/etc/network" ]]; then
         mkdir -p /etc/network # Às vezes o sistema não cria -> Bug?
     else
         mv /etc/network/interfaces{,.orig}
@@ -270,6 +274,7 @@ function other_settings(){
             X-KDE-Username=
         ' | clean > /usr/share/applications/winff.desktop
     fi
+
     prelink -amvR # Prelinkando usando randomização de binários. (+ seguro)
     systemctl enable ufw && ufw enable # Às vezes o Systemd não ativa o serviço
 }
