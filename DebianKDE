@@ -10,7 +10,7 @@
 ###############################################################################
 
 function get(){
-    apt install --no-install-recommends $*
+    apt install -y --no-install-recommends $*
 }
 
 function clean(){
@@ -152,7 +152,7 @@ function clean_system(){
 
 function system_upgrade(){
     apt -qq update
-    apt full-upgrade
+    apt full-upgrade -y
 }
 
 function get_essentials(){
