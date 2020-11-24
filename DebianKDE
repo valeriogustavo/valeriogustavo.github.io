@@ -6,7 +6,7 @@
 ## A partir do Debian Testing Netboot Básico.                                ##
 ## Escrito por Gustavo Valério Ferreira                                      ##
 ## gustavovalerio.com.br                                                     ##
-## 23/11/2020 - V 0.1.2                                                        ##
+## 23/11/2020 - V 0.1.2                                                      ##
 ###############################################################################
 
 function get(){
