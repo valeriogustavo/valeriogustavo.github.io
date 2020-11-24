@@ -32,8 +32,8 @@ function get_apps(){
     get linux-xanmod
     get {opera,google-chrome}-stable chromium{,-l10n}
     get gimp{,-gmic,-data-extras,-plugin-registry} inkscape
+    get audacity calf-plugins mkvtoolnix-gui vokoscreen winff-qt vlc{,-l10n}
     get libreoffice-{style-sifr,calc,writer,{l10n,lightproof}-pt-br,{kf,qt}5}
-    get audacity calf-plugins mkvtoolnix-gui vokoscreen winff-qt elisa vlc{,-l10n}
     
 }
 
@@ -186,11 +186,12 @@ function optimize_system(){
     ufw allow 1714:1764/tcp
     ufw allow 1714:1764/udp
 
-    # Configurando Preload e Prelink
+    # Configurando Preload e Prelink e o Libreoffice
     sed -i 's/memfree = 50/memfree = 100/g'         /etc/preload.conf
     sed -i 's/memcached = 0/memcached = 30/g'       /etc/preload.conf
     sed -i 's/processes = 30/processes = 60/g'      /etc/preload.conf
     sed -i 's/PRELINKING=unknown/PRELINKING=yes/g'  /etc/default/prelink
+    sed -i 's/Logo=1/Logo=0/g'                      /etc/libreoffice/sofficerc
     
     # Avisando ao KDE que ele está prelinkado
     printf 'export KDE_IS_PRELINKED=1' > /etc/profile.d/prelink.sh
@@ -286,15 +287,61 @@ function optimize_system(){
     # Executamos o Prelink com a opção -R ativa
     # Isso ramdomiza os binários e melhora a segurança.
     prelink -amvR
+    
+    # Corrige o problema de rede não gerenciável
+    mv /etc/network/interfaces{,.orig}
+
+    # O sistema não cria um atalho para o WinFF. (bug desde o Ubuntu 16)
+    if [[ ! -f /usr/share/applications/winff.desktop ]]; then
+        printf '
+            [Desktop Entry]
+            Comment=
+            Exec=winff-qt
+            Icon=winff
+            Name=WinFF
+            NoDisplay=false
+            Path[$e]=
+            StartupNotify=true
+            Terminal=0
+            TerminalOptions=
+            Type=Application
+            X-KDE-SubstituteUID=false
+            X-KDE-Username=
+            Categories=AudioVideo;Audio;AudioVideoEditing;
+        ' | clean > /usr/share/applications/winff.desktop
+    fi
+    
+    # Habilita o cache na RAM, melhora o desempenho do sistema.
+    cp /usr/share/systemd/tmp.mount /etc/systemd/system/
+    systemctl enable tmp.mount
+    
+    if [[ ! -f /usr/share/applications/gimp.desktop ]]; then
+        sed -i 's/GNU Image Manipulation Program/Gimp/g' /usr/share/applications/gimp.desktop
+        sed -i 's/Programa de Manipulação de Imagens GNU/Gimp/g' /usr/share/applications/gimp.desktop
+        sed -i 's/Programa de manipulação de imagem do GNU/Gimp/g' /usr/share/applications/gimp.desktop
+    fi
+    
+    if [[ ! -f /usr/share/applications/chromium.desktop ]]; then
+        sed -i 's/Chromium Web Browser/Chromium/g' /usr/share/applications/chromium.desktop
+        sed -i 's/Navegador da Internet/Chromium/g' /usr/share/applications/chromium.desktop
+        sed -i 's/Chromium Navegador da Internet/Chromium/g' /usr/share/applications/chromium.desktop
+    fi
+    
+    if [[ ! -f /usr/share/applications/vlc.desktop ]]; then
+        sed -i 's/VLC media player/VLC/g' /usr/share/applications/vlc.desktop
+        sed -i 's/Reprodutor de Mídias VLC/VLC/g' /usr/share/applications/vlc.desktop
+    fi
 }
 
 function get_plasma_desktop(){
-    get plasma-{nm,pa,{browser-,}integration,framework,workspace,desktop}
-    get kde-{spectacle,config-{sddm,gtk-style{,-preview}}} systemsettings
+    get plasma-{nm,pa,{browser-,}integration,framework,workspace,desktop} sddm
+    get kde-{spectacle,config-{sddm,gtk-style{,-preview}}} systemsettings ark
     get k{init,ate,onsole,win-x11,sysguard,screen,hotkeys,dialog,id3-qt}
-    get k{menuedit,deconnect,infocenter,torrent,denlive,calc,rename}
+    get k{menuedit,deconnect,infocenter,torrent,denlive,calc,rename} 
     get po{werdevil,lkit-kde-agent-1} dolphin{,-plugins} gwenview
-    get kio-extras sddm ark print-manager ffmpegthumbs okular
+    get kio-extras print-manager ffmpegthumbs kwalletmanager
+    get breeze{,-gtk-theme} gtk3-engines-breeze okular
+    get qml-module-org-kde-{kcm,newstuff} elisa
 }
 
 
@@ -313,6 +360,7 @@ if [[ "$1" == "exec" ]] && [[ $UID -eq 0 ]]; then
     get_plasma_desktop
      
     get_apps
+    clean_system
     optimize_system
     
     update-grub
