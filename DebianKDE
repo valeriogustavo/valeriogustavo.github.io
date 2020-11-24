@@ -6,7 +6,7 @@
 ## A partir do Debian Testing Netboot Básico.                                ##
 ## Escrito por Gustavo Valério Ferreira                                      ##
 ## gustavovalerio.com.br                                                     ##
-## 23/11/2020 - V 0.1                                                        ##
+## 23/11/2020 - V 0.1.2                                                        ##
 ###############################################################################
 
 function get(){
@@ -15,6 +15,52 @@ function get(){
 
 function clean(){
     sed 's|^[ \t]*||;/./,$!d' $1
+}
+
+function set_print(){
+    test -z $1 && return 255
+
+    local -r PRINT="${1,,}"
+    
+    get print-manager cups system-config-printer-{common,udev}
+    
+    case "$PRINT" in
+        'hp')
+            get hplip{,-gui} printer-driver-{hp{ijs,cups},postscript-hp,pxljr}
+        ;;
+        
+        'pdf')
+            get printer-driver-cups-pdf
+        ;;
+        
+        'epson')
+            get printer-driver-escpr
+            
+            wget -c https://download2.ebz.epson.net/epsonscan2/common/deb/x64/epsonscan2-bundle-6.6.2.1.x86_64.deb.tar.gz -O epsonscan2.tar.gz
+            
+            if [[ -e './epsonscan2.tar.gz' ]]; then
+                tar -zxf ./epsonscan2.tar.gz
+                ./epsonscan2-bundle-*.deb/install.sh
+                apt install -f -y
+                
+                if [[ -e '/usr/share/applications/epsonscan2.desktop'  ]]; then
+                    sed -i 's/Epson Scan 2/Digitalizar/g' /usr/share/applications/epsonscan2.desktop
+                    sed -i "s/Icon=.*$/Icon=simple-scan/g" /usr/share/applications/epsonscan2.desktop
+                    
+                    rm -rf ./epsonscan2{.tar.gz,-*/}
+                fi
+            fi
+        ;;
+        
+        'cannon')
+            get cups-backend-bjnp printer-driver-cjet
+        ;;
+       
+        * | 'all')
+            get skanlite printer-driver-all skanlite sane{,-utils}
+        ;;
+    esac
+    
 }
 
 function get_keys(){
@@ -32,7 +78,7 @@ function get_apps(){
     get linux-xanmod
     get {opera,google-chrome}-stable chromium{,-l10n}
     get gimp{,-gmic,-data-extras,-plugin-registry} inkscape
-    get audacity calf-plugins mkvtoolnix-gui vokoscreen winff-qt vlc{,-l10n}
+    get audacity mkvtoolnix-gui vokoscreen winff-qt vlc{,-l10n}
     get libreoffice-{style-sifr,calc,writer,{l10n,lightproof}-pt-br,{kf,qt}5}
     
 }
@@ -186,12 +232,16 @@ function optimize_system(){
     ufw allow 1714:1764/tcp
     ufw allow 1714:1764/udp
 
-    # Configurando Preload, Prelink e Libreoffice
+    # Configurando Preload e Prelink e o Libreoffice
     sed -i 's/memfree = 50/memfree = 100/g'         /etc/preload.conf
     sed -i 's/memcached = 0/memcached = 30/g'       /etc/preload.conf
     sed -i 's/processes = 30/processes = 60/g'      /etc/preload.conf
     sed -i 's/PRELINKING=unknown/PRELINKING=yes/g'  /etc/default/prelink
     sed -i 's/Logo=1/Logo=0/g'                      /etc/libreoffice/sofficerc
+    
+    # Seta lz4 para decompactar o kernel (boot +rápido)
+    get lz4 liblz4-1
+    sed -i 's/COMPRESS=gzip/COMPRESS=lz4/g' /etc/initramfs-tools/initramfs.conf
     
     # Avisando ao KDE que ele está prelinkado
     printf 'export KDE_IS_PRELINKED=1' > /etc/profile.d/prelink.sh
@@ -339,14 +389,12 @@ function get_plasma_desktop(){
     get k{init,ate,onsole,win-x11,sysguard,screen,hotkeys,dialog,id3-qt}
     get k{menuedit,deconnect,infocenter,torrent,denlive,calc,rename} 
     get po{werdevil,lkit-kde-agent-1} dolphin{,-plugins} gwenview
-    get kio-extras print-manager ffmpegthumbs kwalletmanager
-    get breeze{,-gtk-theme} gtk3-engines-breeze okular
-    get qml-module-org-kde-{kcm,newstuff} elisa
+    get qml-module-org-kde-{kcm,newstuff} elisa librsvg2-common
+    get kio-extras ffmpegthumbs kwalletmanager okular
+    get breeze{,-gtk-theme} gtk3-engines-breeze
 }
 
-
 if [[ "$1" == "exec" ]] && [[ $UID -eq 0 ]]; then
-    # Se usa o Vim, comente a linha abaixo :)
     apt -qq update
     apt purge vim-{tiny,common} -y
 
@@ -358,7 +406,12 @@ if [[ "$1" == "exec" ]] && [[ $UID -eq 0 ]]; then
     system_upgrade
     get_essentials
     get_plasma_desktop
-     
+    
+    # Defina a marca de sua impressora
+    # ou mantenha 'all' para adicionar suporte
+    # para todas as impressoras suportadas pelo Debian.
+    set_print all
+    
     get_apps
     clean_system
     optimize_system
