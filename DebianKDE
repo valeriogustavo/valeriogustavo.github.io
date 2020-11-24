@@ -186,7 +186,7 @@ function optimize_system(){
     ufw allow 1714:1764/tcp
     ufw allow 1714:1764/udp
 
-    # Configurando Preload e Prelink e o Libreoffice
+    # Configurando Preload, Prelink e Libreoffice
     sed -i 's/memfree = 50/memfree = 100/g'         /etc/preload.conf
     sed -i 's/memcached = 0/memcached = 30/g'       /etc/preload.conf
     sed -i 's/processes = 30/processes = 60/g'      /etc/preload.conf
@@ -291,7 +291,7 @@ function optimize_system(){
     # Corrige o problema de rede não gerenciável
     mv /etc/network/interfaces{,.orig}
 
-    # O sistema não cria um atalho para o WinFF. (bug desde o Ubuntu 16)
+    # O sistema não cria um atalho para o WinFF.
     if [[ ! -f /usr/share/applications/winff.desktop ]]; then
         printf '
             [Desktop Entry]
