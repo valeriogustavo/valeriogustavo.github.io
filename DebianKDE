@@ -142,6 +142,24 @@ function lock_apps(){
         Pin-Priority: -1
     ' | clean > /etc/apt/preferences.d/10-akonadi
 
+    # Configuraremos o Debian como um sistema híbrido
+    # Testing/Unstable/Experimental por motivos óbvios.
+    # Os repositórios serão configurados com prioridades
+    # Próprias e distrintas, pacotes instáveis e experimentais
+    # serão instalados apenas explicitamente e, se por algum motivo,
+    # forem removidos do repositório Testing, o que pode ocorrer pouco
+    # antes do repositório passar pelo 'Freeze', antes da Stable ser lançada.
+    
+    # Ter vários repositórios 'pinados' ajuda a manter os pacotes funcionando bem,
+    # mesmo que apenas o Testing esteja funcionando como padrão, o APT sabe lidar muito bem
+    # com repositórios múltiplos e também com manutenção de pacotes de versões e fontes distintas.
+    
+    # Com as prioridades definidas, o sistema sempre procurará o pacote no repositório padrão,
+    # Se o pacote instalado não tiver updates nem existência no Testing, o apt procura no Unstable,
+    # E só por último no Experimental caso nenhum dos anteriores possuam mais alguma versão do pacote instalado.
+    # Caso o usuário queira um pacote de um respositório específico, deverá especificar a fonte na hora da instalação.
+    # 'apt install gimp/unstable' ou 'apt install gimp/experimental' instalará o gimp de tais repositórios, se existir versão.
+
     # Diminuímos a prioridade
     # de todos os pacotes instáveis.
     printf '
@@ -149,6 +167,15 @@ function lock_apps(){
         Pin: release a=unstable
         Pin-Priority: 400
     ' | clean > /etc/apt/preferences.d/10-unstable
+    
+    # Por padrão, o repositório Experimental
+    # tem prioridade 1 no APT, definiremos novamente
+    # Apenas por questões de segurança e padronização de configurações.
+    printf '
+        Package: *
+        Pin: release a=experimental
+        Pin-Priority: 350
+    ' | clean > /etc/apt/preferences.d/10-experimental
 
     # Desativamos o autoupdate,
     # Setamos a release principal
@@ -184,6 +211,10 @@ function set_repos(){
     printf '
         deb [arch=amd64] http://deb.debian.org/debian unstable main contrib non-free
     ' | clean > /etc/apt/sources.list.d/unstable-all.list
+
+    printf '
+        deb [arch=amd64] http://deb.debian.org/debian experimental main contrib non-free
+    ' | clean > /etc/apt/sources.list.d/experimental-all.list
     
     printf '
         deb [arch=amd64] http://security.debian.org/debian-security testing-security main contrib non-free
