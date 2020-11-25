@@ -57,7 +57,7 @@ function set_print(){
         ;;
        
         * | 'all')
-            get skanlite printer-driver-all skanlite sane{,-utils}
+            get printer-driver-all skanlite sane{,-utils}
         ;;
     esac
     
