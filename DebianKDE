@@ -186,7 +186,7 @@ function lock_apps(){
         APT::Default-Release "testing";
         APT::Periodic::Unattended-Upgrade "0";
         APT::Periodic::Update-Package-Lists "0";
-    ' | clean > /etc/apt/apt.conf.d/99-apt
+    ' | clean > /etc/apt/apt.conf.d/99-z-apt
 }
 
 function set_repos(){
