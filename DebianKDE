@@ -6,7 +6,7 @@
 ## A partir do Debian Testing Netboot Básico.                                ##
 ## Escrito por Gustavo Valério Ferreira                                      ##
 ## gustavovalerio.com.br                                                     ##
-## 23/11/2020 - V 0.1.2                                                      ##
+## 23/11/2020 - V 0.1.3                                                      ##
 ###############################################################################
 
 function get(){
@@ -237,7 +237,7 @@ function get_essentials(){
     local -r INTEL=$(grep -i 'intel' /proc/cpuinfo | wc -l)
     
     if   [[ $AMD -gt 0 ]]; then
-        get xserver-xorg-video-{amdgpu,ati,radeon} amd64-microcode
+        get xserver-xorg-video-{amdgpu,ati,radeon} amd64-microcode firmware-amd-graphics
     elif [[ $INTEL -gt 0 ]]; then
         get xserver-xorg-video-intel intel-microcode iucode-tool mesa-utils
     else
