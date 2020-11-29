@@ -244,7 +244,7 @@ function get_essentials(){
         get xserver-xorg-video-all
     fi
     
-    get pulseaudio{,-utils} xinit nano xauth xserver-xorg-core irqbalance ufw thermald
+    get pulseaudio{,-utils} xinit nano xauth xserver-xorg-core irqbalance ufw thermald python-is-python3
 }
 
 function optimize_system(){
@@ -396,19 +396,19 @@ function optimize_system(){
     cp /usr/share/systemd/tmp.mount /etc/systemd/system/
     systemctl enable tmp.mount
     
-    if [[ ! -f /usr/share/applications/gimp.desktop ]]; then
+    if [[ -f /usr/share/applications/gimp.desktop ]]; then
         sed -i 's/GNU Image Manipulation Program/Gimp/g' /usr/share/applications/gimp.desktop
         sed -i 's/Programa de Manipulação de Imagens GNU/Gimp/g' /usr/share/applications/gimp.desktop
         sed -i 's/Programa de manipulação de imagem do GNU/Gimp/g' /usr/share/applications/gimp.desktop
     fi
     
-    if [[ ! -f /usr/share/applications/chromium.desktop ]]; then
+    if [[ -f /usr/share/applications/chromium.desktop ]]; then
         sed -i 's/Chromium Web Browser/Chromium/g' /usr/share/applications/chromium.desktop
         sed -i 's/Navegador da Internet/Chromium/g' /usr/share/applications/chromium.desktop
         sed -i 's/Chromium Navegador da Internet/Chromium/g' /usr/share/applications/chromium.desktop
     fi
     
-    if [[ ! -f /usr/share/applications/vlc.desktop ]]; then
+    if [[ -f /usr/share/applications/vlc.desktop ]]; then
         sed -i 's/VLC media player/VLC/g' /usr/share/applications/vlc.desktop
         sed -i 's/Reprodutor de Mídias VLC/VLC/g' /usr/share/applications/vlc.desktop
     fi
