@@ -416,13 +416,13 @@ function optimize_system(){
 
 function get_plasma_desktop(){
     get plasma-{nm,pa,{browser-,}integration,framework,workspace,desktop} sddm
-    get kde-{spectacle,config-{sddm,gtk-style{,-preview}}} systemsettings ark
+    get kde-{spectacle,config-{sddm,screenlocker,gtk-style{,-preview}}} ark
     get k{init,ate,onsole,win-x11,sysguard,screen,hotkeys,dialog,id3-qt}
-    get k{menuedit,deconnect,infocenter,torrent,denlive,calc,rename} 
+    get k{menuedit,deconnect,infocenter,torrent,denlive,calc,rename}
     get po{werdevil,lkit-kde-agent-1} dolphin{,-plugins} gwenview
     get qml-module-org-kde-{kcm,newstuff} elisa librsvg2-common
-    get kio-extras ffmpegthumbs kwalletmanager okular
-    get breeze{,-gtk-theme} gtk3-engines-breeze
+    get kio-extras ffmpegthumbs kwalletmanager systemsettings
+    get breeze{,-gtk-theme} gtk3-engines-breeze okular
 }
 
 if [[ "$1" == "exec" ]] && [[ $UID -eq 0 ]]; then
