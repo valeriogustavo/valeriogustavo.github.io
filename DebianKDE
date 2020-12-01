@@ -281,7 +281,7 @@ function get_essentials(){
         install xserver-xorg-video-all
     fi
     
-    install pulseaudio{,-utils} xinit nano xauth xserver-xorg-core irqbalance ufw thermald python-is-python3
+    install pulseaudio{,-utils} nano x{init,auth,server-xorg-core} irqbalance ufw thermald python-is-python3
 }
 
 function optimize_system(){
@@ -301,7 +301,7 @@ function optimize_system(){
     ufw allow 1714:1764/tcp
     ufw allow 1714:1764/udp
 
-    # Configurando Preload e Prelink e o Libreoffice
+    # Configurando Preload, Prelink e o Libreoffice
     sed -i 's/memfree = 50/memfree = 100/g'         /etc/preload.conf
     sed -i 's/memcached = 0/memcached = 30/g'       /etc/preload.conf
     sed -i 's/processes = 30/processes = 60/g'      /etc/preload.conf
@@ -370,6 +370,7 @@ function optimize_system(){
         vm.vfs_cache_pressure = 50
     ' | clean >> $SYSCTL
 
+    
     if [[ $MEM -le 2 ]]; then
         $write 'vm.swappiness = 10\n' >> $SYSCTL
     elif [[ $MEM -le 4 ]]; then
@@ -388,7 +389,6 @@ function optimize_system(){
 
 
     if [[ $DISK_TYPE -eq 0 ]]; then
-        #SSD
         $write '
             vm.dirty_background_ratio = 3
             vm.dirty_ratio = 5
@@ -398,7 +398,6 @@ function optimize_system(){
         # Mas, por garantia, melhor habilitar manualmente.
         systemctl enable fstrim.timer
     else
-        #HDD
         $write '
             vm.dirty_background_ratio = 5
             vm.dirty_ratio = 15
