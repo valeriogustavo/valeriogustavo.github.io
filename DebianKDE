@@ -10,8 +10,8 @@
 ###############################################################################
 
 ### Variáveis
-readonly write='printf'
-readonly return='printf'
+readonly write='printf' # facilita o entendimento
+readonly return='printf' # retorno das funções amigáveis
 
 function detect(){
     case "$1" in
@@ -32,13 +32,13 @@ function detect(){
             local -r AMD=$(egrep -i "amd|radeon" gpu.info | wc -l)
             rm -f gpu.info
                 
-                if   [[ $AMD -gt 0 ]]; then
-                    $return 'AMD'
-                elif [[ $INTEL -gt 0 ]]; then
-                    $return 'Intel'
-                elif [[ $NVIDIA -gt 0 ]]; then
-                    $return 'Nvidia'
-                fi ;;
+            if   [[ $AMD -gt 0 ]]; then
+                $return 'AMD'
+            elif [[ $INTEL -gt 0 ]]; then
+                $return 'Intel'
+            elif [[ $NVIDIA -gt 0 ]]; then
+                $return 'Nvidia'
+            fi ;;
     esac
     
 }
@@ -75,9 +75,10 @@ function set_print(){
                 ./epsonscan2-bundle-*.deb/install.sh
                 apt install -f -y
                 
-                if [[ -e '/usr/share/applications/epsonscan2.desktop' ]]; then
-                    sed -i 's/Epson Scan 2/Digitalizar/g' /usr/share/applications/epsonscan2.desktop
-                    sed -i "s/Icon=.*$/Icon=simple-scan/g" /usr/share/applications/epsonscan2.desktop
+                local -r EPSON='/usr/share/applications/epsonscan2.desktop'
+                if [[ -e "$EPSON" ]]; then
+                    sed -i 's/Epson Scan 2/Digitalizar/g' "$EPSON"
+                    sed -i "s/Icon=.*$/Icon=simple-scan/g" "$EPSON"
                     
                     rm -rf ./epsonscan2{.tar.gz,-*/}
                 fi
