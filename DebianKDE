@@ -6,11 +6,45 @@
 ## A partir do Debian Testing Netboot Básico.                                ##
 ## Escrito por Gustavo Valério Ferreira                                      ##
 ## gustavovalerio.com.br                                                     ##
-## 23/11/2020 - V 0.1.3                                                      ##
+## 23/11/2020 - V 0.1.4                                                      ##
 ###############################################################################
 
-function get(){
-    apt install -y --no-install-recommends $*
+### Variáveis
+readonly write='printf'
+readonly return='printf'
+
+function detect(){
+    case "$1" in
+        cpu)
+            local -r AMD=$(grep -i 'amd' /proc/cpuinfo | wc -l)
+            local -r INTEL=$(grep -i 'intel' /proc/cpuinfo | wc -l)
+            
+            if   [[ $AMD -gt 0 ]]; then
+                $return 'AMD'
+            elif [[ $INTEL -gt 0 ]]; then
+                $return 'Intel'
+            fi ;;
+
+        gpu)
+            lspci -nn | egrep -i "3d|display|vga" > gpu.info
+            local -r INTEL=$(grep -i "intel" gpu.info | wc -l)
+            local -r NVIDIA=$(grep -i "nvidia" gpu.info | wc -l)
+            local -r AMD=$(egrep -i "amd|radeon" gpu.info | wc -l)
+            rm -f gpu.info
+                
+                if   [[ $AMD -gt 0 ]]; then
+                    $return 'AMD'
+                elif [[ $INTEL -gt 0 ]]; then
+                    $return 'Intel'
+                elif [[ $NVIDIA -gt 0 ]]; then
+                    $return 'Nvidia'
+                fi ;;
+    esac
+    
+}
+
+function install(){
+    apt install -y --no-install-recommends $*    
 }
 
 function clean(){
@@ -22,19 +56,17 @@ function set_print(){
 
     local -r PRINT="${1,,}"
     
-    get print-manager cups system-config-printer-{common,udev}
+    install print-manager cups system-config-printer-{common,udev}
     
     case "$PRINT" in
         'hp')
-            get hplip{,-gui} printer-driver-{hp{ijs,cups},postscript-hp,pxljr}
-        ;;
+            install hplip{,-gui} printer-driver-{hp{ijs,cups},postscript-hp,pxljr} ;;
         
         'pdf')
-            get printer-driver-cups-pdf
-        ;;
+            install printer-driver-cups-pdf ;;
         
         'epson')
-            get printer-driver-escpr
+            install printer-driver-escpr
             
             wget -c https://download2.ebz.epson.net/epsonscan2/common/deb/x64/epsonscan2-bundle-6.6.2.1.x86_64.deb.tar.gz -O epsonscan2.tar.gz
             
@@ -43,43 +75,40 @@ function set_print(){
                 ./epsonscan2-bundle-*.deb/install.sh
                 apt install -f -y
                 
-                if [[ -e '/usr/share/applications/epsonscan2.desktop'  ]]; then
+                if [[ -e '/usr/share/applications/epsonscan2.desktop' ]]; then
                     sed -i 's/Epson Scan 2/Digitalizar/g' /usr/share/applications/epsonscan2.desktop
                     sed -i "s/Icon=.*$/Icon=simple-scan/g" /usr/share/applications/epsonscan2.desktop
                     
                     rm -rf ./epsonscan2{.tar.gz,-*/}
                 fi
-            fi
-        ;;
+            fi ;;
         
         'cannon')
-            get cups-backend-bjnp printer-driver-cjet
-        ;;
+            install cups-backend-bjnp printer-driver-cjet ;;
        
         * | 'all')
-            get printer-driver-all skanlite sane{,-utils}
-        ;;
+            install printer-driver-all skanlite sane{,-utils} ;;
     esac
     
 }
 
 function get_keys(){
-    local -r WGET="wget -qO -"
+    local -r GET="wget -qO -"
     local -r KEY="apt-key add -"
 
-    get wget gnupg ca-certificates
+    install wget gnupg ca-certificates
     
-    $WGET https://dl.xanmod.org/gpg.key | $KEY
-    $WGET https://deb.opera.com/archive.key | $KEY
-    $WGET https://dl.google.com/linux/linux_signing_key.pub | $KEY
+    $GET https://dl.xanmod.org/gpg.key | $KEY
+    $GET https://deb.opera.com/archive.key | $KEY
+    $GET https://dl.google.com/linux/linux_signing_key.pub | $KEY
 }
 
 function get_apps(){
-    get linux-xanmod
-    get {opera,google-chrome}-stable chromium{,-l10n}
-    get gimp{,-gmic,-data-extras,-plugin-registry} inkscape
-    get audacity mkvtoolnix-gui vokoscreen winff-qt vlc{,-l10n}
-    get libreoffice-{style-sifr,calc,writer,{l10n,lightproof}-pt-br,{kf,qt}5}
+    install linux-xanmod
+    install {opera,google-chrome}-stable chromium{,-l10n}
+    install gimp{,-gmic,-data-extras,-plugin-registry} inkscape
+    install audacity mkvtoolnix-gui vokoscreen winff-qt vlc{,-l10n}
+    install libreoffice-{style-sifr,calc,writer,{l10n,lightproof}-pt-br,{kf,qt}5}
     
 }
 
@@ -90,97 +119,95 @@ function set_grub(){
 
     mv -v /etc/default/grub{,.orig}
 
-    printf '
+    $write '
         GRUB_DEFAULT=0
         GRUB_TIMEOUT=0
         GRUB_TIMEOUT_STYLE=hidden
         GRUB_CMDLINE_LINUX_DEFAULT="quiet splash=silent"
         GRUB_DISTRIBUTOR=`lsb_release -i -s 2> /dev/null || echo Debian`
-        GRUB_CMDLINE_LINUX="mitigations=off loglevel=3 vga=current systemd.show_status=false rd.udev.log_priority=3  libahci.ignore_sss=1"
+        GRUB_CMDLINE_LINUX="mitigations=off loglevel=3 vga=current systemd.show_status=false rd.udev.log_priority=3 libahci.ignore_sss=1"
     ' | clean > /etc/default/grub
     
-    printf '#KERNEL\nkernel.printk = 3 3 3 3\n\n' > /etc/sysctl.d/99-z-personal.conf 
+    $write '#KERNEL\nkernel.printk = 3 3 3 3\n\n' > /etc/sysctl.d/99-z-personal.conf 
 }
 
 function lock_apps(){
     # Impede instalação do Plymouth
     # Plymouth pode ser belo, mas atrasa o boot.
-    printf '
+    $write '
         Package: plymouth*
         Pin: release *
         Pin-Priority: -1
-    ' | clean > /etc/apt/preferences.d/10-plymouth
+    ' | clean > /etc/apt/preferences.d/01-plymouth
 
     # Impede instalação do Packagekit
-    printf '
+    # Não gosto dele, a implementação promete
+    # no entanto, acho que praticamente não há uso.
+    $write '
         Package: packagekit*
         Pin: release *
         Pin-Priority: -1
-    ' | clean > /etc/apt/preferences.d/10-packagekit
+    ' | clean > /etc/apt/preferences.d/02-packagekit
 
-    # Bloqueando pacotes não-nativos
+    ######################################
+    # Bloqueando pacotes não-nativos     #
+    # Não gosto de Snaps ou Flatpaks.    #
+    ######################################
+
     # Impede instalação de softwares Snaps
-    printf '
+    # Se usa ou quer usar snaps, comente o código.
+    $write '
         Package: snapd*
         Pin: release *
         Pin-Priority: -1
-    ' | clean > /etc/apt/preferences.d/10-snap
+    ' | clean > /etc/apt/preferences.d/03-snap
 
     # Impede instalação de softwares Flatpaks
-    printf '
+    # Se usa ou quer usar flatpaks, comente o código.
+    $write '
         Package: flatpak*
         Pin: release *
         Pin-Priority: -1
-    ' | clean > /etc/apt/preferences.d/10-flatpak
+    ' | clean > /etc/apt/preferences.d/04-flatpak
+
+    # Impede instalação de softwares que tragam
+    # a base gnome como dependência (evita bagunça)
+    $write '
+        Package: gnome*
+        Pin: release *
+        Pin-Priority: -1
+    ' | clean > /etc/apt/preferences.d/05-gnome
 
     # Impede instalação do Akonadi
     # Isso também impede a instalação
     # De softwares que dependem dele. São um peso!
-    printf '
+    $write '
         Package: akonadi*
         Pin: release *
         Pin-Priority: -1
-    ' | clean > /etc/apt/preferences.d/10-akonadi
-
-    # Configuraremos o Debian como um sistema híbrido
-    # Testing/Unstable/Experimental por motivos óbvios.
-    # Os repositórios serão configurados com prioridades
-    # Próprias e distrintas, pacotes instáveis e experimentais
-    # serão instalados apenas explicitamente e, se por algum motivo,
-    # forem removidos do repositório Testing, o que pode ocorrer pouco
-    # antes do repositório passar pelo 'Freeze', antes da Stable ser lançada.
-    
-    # Ter vários repositórios 'pinados' ajuda a manter os pacotes funcionando bem,
-    # mesmo que apenas o Testing esteja funcionando como padrão, o APT sabe lidar muito bem
-    # com repositórios múltiplos e também com manutenção de pacotes de versões e fontes distintas.
-    
-    # Com as prioridades definidas, o sistema sempre procurará o pacote no repositório padrão,
-    # Se o pacote instalado não tiver updates nem existência no Testing, o apt procura no Unstable,
-    # E só por último no Experimental caso nenhum dos anteriores possuam mais alguma versão do pacote instalado.
-    # Caso o usuário queira um pacote de um respositório específico, deverá especificar a fonte na hora da instalação.
-    # 'apt install gimp/unstable' ou 'apt install gimp/experimental' instalará o gimp de tais repositórios, se existir versão.
+    ' | clean > /etc/apt/preferences.d/06-akonadi
 
     # Diminuímos a prioridade
     # de todos os pacotes instáveis.
-    printf '
+    $write '
         Package: *
         Pin: release a=unstable
-        Pin-Priority: 400
-    ' | clean > /etc/apt/preferences.d/10-unstable
+        Pin-Priority: 2
+    ' | clean > /etc/apt/preferences.d/07-unstable
     
     # Por padrão, o repositório Experimental
     # tem prioridade 1 no APT, definiremos novamente
     # Apenas por questões de segurança e padronização de configurações.
-    printf '
+    $write '
         Package: *
         Pin: release a=experimental
-        Pin-Priority: 350
-    ' | clean > /etc/apt/preferences.d/10-experimental
+        Pin-Priority: 1
+    ' | clean > /etc/apt/preferences.d/08-experimental
 
     # Desativamos o autoupdate,
     # Setamos a release principal
     # E aumentamos o cache do apt.
-    printf '
+    $write '
         APT::Periodic::Enable "0";
         APT::Cache-Limit "100000000";
         APT::Default-Release "testing";
@@ -192,31 +219,31 @@ function lock_apps(){
 function set_repos(){
     rm -f /etc/apt/sources.list
     
-    printf '
+    $write '
         deb [arch=amd64] http://deb.xanmod.org releases main
     ' | clean > /etc/apt/sources.list.d/xanmod-kernel.list
     
-    printf '
+    $write '
         deb [arch=amd64] https://deb.opera.com/opera-stable stable non-free
     ' | clean > /etc/apt/sources.list.d/opera-stable.list
     
-    printf '
+    $write '
         deb [arch=amd64] https://dl.google.com/linux/chrome/deb stable main
     ' | clean > /etc/apt/sources.list.d/google-chrome.list
 
-    printf '
+    $write '
         deb [arch=amd64] http://deb.debian.org/debian testing main contrib non-free
     ' | clean > /etc/apt/sources.list.d/testing-all.list
 
-    printf '
+    $write '
         deb [arch=amd64] http://deb.debian.org/debian unstable main contrib non-free
     ' | clean > /etc/apt/sources.list.d/unstable-all.list
 
-    printf '
+    $write '
         deb [arch=amd64] http://deb.debian.org/debian experimental main contrib non-free
     ' | clean > /etc/apt/sources.list.d/experimental-all.list
     
-    printf '
+    $write '
         deb [arch=amd64] http://security.debian.org/debian-security testing-security main contrib non-free
     ' | clean > /etc/apt/sources.list.d/testing-security.list
 }
@@ -224,7 +251,7 @@ function set_repos(){
 function clean_system(){
     apt clean
     apt autoclean -y
-    apt autoremove -y
+    apt autoremove --purge -y
 }
 
 function system_upgrade(){
@@ -233,18 +260,27 @@ function system_upgrade(){
 }
 
 function get_essentials(){
-    local -r AMD=$(grep -i 'amd' /proc/cpuinfo | wc -l)
-    local -r INTEL=$(grep -i 'intel' /proc/cpuinfo | wc -l)
+    local -r CPU=$(detect cpu)
+    local -r GPU=$(detect gpu)
     
-    if   [[ $AMD -gt 0 ]]; then
-        get xserver-xorg-video-{amdgpu,ati,radeon} amd64-microcode firmware-amd-graphics
-    elif [[ $INTEL -gt 0 ]]; then
-        get xserver-xorg-video-intel intel-microcode iucode-tool mesa-utils
+    if   [[ "$CPU" == "AMD" ]]; then
+        install amd64-microcode
+    elif [[ "$CPU" == "Intel" ]]; then
+        install intel-microcode iucode-tool
+    fi
+
+    
+    if   [[ "$GPU" == "AMD" ]]; then
+        install xserver-xorg-video-{amdgpu,ati,radeon} firmware-amd-graphics
+    elif [[ "$GPU" == "Intel" ]]; then
+        install xserver-xorg-video-intel mesa-utils
+    elif [[ "$GPU" == "Nvidia" ]]; then
+        install nvidia-{detect,driver}
     else
-        get xserver-xorg-video-all
+        install xserver-xorg-video-all
     fi
     
-    get pulseaudio{,-utils} xinit nano xauth xserver-xorg-core irqbalance ufw thermald python-is-python3
+    install pulseaudio{,-utils} xinit nano xauth xserver-xorg-core irqbalance ufw thermald python-is-python3
 }
 
 function optimize_system(){
@@ -254,10 +290,11 @@ function optimize_system(){
 
     # Desativando e mascarando serviços desnecessários
     systemctl disable --now apt-daily{,-upgrade}{.service,.timer} NetworkManager-wait-online.service
-    systemctl mask apt-daily{,-upgrade}{.service,.timer} NetworkManager-wait-online.service    
-    systemctl enable ufw && ufw enable # Systemd às vezes não inicia o UFW
+    systemctl mask apt-daily{,-upgrade}{.service,.timer} NetworkManager-wait-online.service 
+    # Systemd às vezes não inicia o UFW
+    systemctl enable ufw && ufw enable
 
-    get prel{oad,ink}
+    install prel{oad,ink}
     
     # Liberando portas para o KDE Connect
     ufw allow 1714:1764/tcp
@@ -271,17 +308,19 @@ function optimize_system(){
     sed -i 's/Logo=1/Logo=0/g'                      /etc/libreoffice/sofficerc
     
     # Seta lz4 para decompactar o kernel (boot +rápido)
-    get lz4 liblz4-1
+    install lz4 liblz4-1
     sed -i 's/COMPRESS=gzip/COMPRESS=lz4/g' /etc/initramfs-tools/initramfs.conf
     
     # Avisando ao KDE que ele está prelinkado
-    printf 'export KDE_IS_PRELINKED=1' > /etc/profile.d/prelink.sh
+    $write 'export KDE_IS_PRELINKED=1' > /etc/profile.d/kde-prelink.sh
 
     # Configurando o DPKG para executar o Prelink
     # Sempre que houver remoção ou instalação de pacotes
-    printf 'DPkg::Post-Invoke {"sleep 2;/usr/sbin/prelink -amR";}' > /etc/apt/apt.conf.d/10-prelink
+    $write '
+        DPkg::Post-Invoke {"sleep 2;/usr/sbin/prelink -amR";}
+        ' | clean > /etc/apt/apt.conf.d/10-prelink
 
-    printf '
+    $write '
         #CORE
         net.core.default_qdisc = cake
         net.core.netdev_max_backlog = 16384
@@ -331,35 +370,35 @@ function optimize_system(){
     ' | clean >> $SYSCTL
 
     if [[ $MEM -le 2 ]]; then
-        printf 'vm.swappiness = 10\n' >> $SYSCTL
+        $write 'vm.swappiness = 10\n' >> $SYSCTL
     elif [[ $MEM -le 4 ]]; then
-        printf 'vm.swappiness = 5\n' >> $SYSCTL
+        $write 'vm.swappiness = 5\n' >> $SYSCTL
     elif [[ $MEM -le 8 ]]; then
-        printf 'vm.swappiness = 3\n' >> $SYSCTL
+        $write 'vm.swappiness = 3\n' >> $SYSCTL
     elif [[ $MEM -le 12 ]]; then
-        printf 'vm.swappiness = 2\n' >> $SYSCTL
+        $write 'vm.swappiness = 2\n' >> $SYSCTL
     elif [[ $MEM -le 16 ]]; then
-        printf 'vm.swappiness = 1\n' >> $SYSCTL
+        $write 'vm.swappiness = 1\n' >> $SYSCTL
     else
         # Desabilita o uso da swap
         # Em sistemas com mais de 16Gb de RAM.
-        printf 'vm.swappiness = 0\n' >> $SYSCTL
+        $write 'vm.swappiness = 0\n' >> $SYSCTL
     fi
 
 
     if [[ $DISK_TYPE -eq 0 ]]; then
         #SSD
-        printf '
+        $write '
             vm.dirty_background_ratio = 3
             vm.dirty_ratio = 5
         ' | clean >> $SYSCTL
 
-        # O Debian ativa o trim por padrão
-        # Mas, por garantia, melhor habilitar.
+        # O Debian ativa o trim automaticamente,
+        # Mas, por garantia, melhor habilitar manualmente.
         systemctl enable fstrim.timer
     else
         #HDD
-        printf '
+        $write '
             vm.dirty_background_ratio = 5
             vm.dirty_ratio = 15
         ' | clean >> $SYSCTL
@@ -373,8 +412,8 @@ function optimize_system(){
     mv /etc/network/interfaces{,.orig}
 
     # O sistema não cria um atalho para o WinFF.
-    if [[ ! -f /usr/share/applications/winff.desktop ]]; then
-        printf '
+    if [[ ! -e /usr/share/applications/winff.desktop ]]; then
+        $write '
             [Desktop Entry]
             Comment=
             Exec=winff-qt
@@ -392,37 +431,40 @@ function optimize_system(){
         ' | clean > /usr/share/applications/winff.desktop
     fi
     
-    # Habilita o cache na RAM, melhora o desempenho do sistema.
+    # Habilita um RAMDISK, melhora o desempenho do sistema.
     cp /usr/share/systemd/tmp.mount /etc/systemd/system/
     systemctl enable tmp.mount
     
-    if [[ -f /usr/share/applications/gimp.desktop ]]; then
-        sed -i 's/GNU Image Manipulation Program/Gimp/g' /usr/share/applications/gimp.desktop
-        sed -i 's/Programa de Manipulação de Imagens GNU/Gimp/g' /usr/share/applications/gimp.desktop
-        sed -i 's/Programa de manipulação de imagem do GNU/Gimp/g' /usr/share/applications/gimp.desktop
+    local -r GIMP='/usr/share/applications/gimp.desktop'
+    if [[ -e "$GIMP" ]]; then
+        sed -i 's/GNU Image Manipulation Program/Gimp/g' "$GIMP"
+        sed -i 's/Programa de Manipulação de Imagens GNU/Gimp/g' "$GIMP"
+        sed -i 's/Programa de manipulação de imagem do GNU/Gimp/g' "$GIMP"
     fi
     
-    if [[ -f /usr/share/applications/chromium.desktop ]]; then
-        sed -i 's/Chromium Web Browser/Chromium/g' /usr/share/applications/chromium.desktop
-        sed -i 's/Navegador da Internet/Chromium/g' /usr/share/applications/chromium.desktop
-        sed -i 's/Chromium Navegador da Internet/Chromium/g' /usr/share/applications/chromium.desktop
+    local -r CHROMIUM='/usr/share/applications/chromium.desktop'
+    if [[ -e "$CHROMIUM" ]]; then
+        sed -i 's/Chromium Web Browser/Chromium/g' "$CHROMIUM"
+        sed -i 's/Navegador da Internet/Chromium/g' "$CHROMIUM"
+        sed -i 's/Chromium Navegador da Internet/Chromium/g' "$CHROMIUM"
     fi
     
-    if [[ -f /usr/share/applications/vlc.desktop ]]; then
-        sed -i 's/VLC media player/VLC/g' /usr/share/applications/vlc.desktop
-        sed -i 's/Reprodutor de Mídias VLC/VLC/g' /usr/share/applications/vlc.desktop
+    local -r VLC='/usr/share/applications/vlc.desktop'
+    if [[ -e "$VLC" ]]; then
+        sed -i 's/VLC media player/VLC/g' "$VLC"
+        sed -i 's/Reprodutor de Mídias VLC/VLC/g' "$VLC"
     fi
 }
 
 function get_plasma_desktop(){
-    get plasma-{nm,pa,{browser-,}integration,framework,workspace,desktop} sddm
-    get kde-{spectacle,config-{sddm,screenlocker,gtk-style{,-preview}}} ark
-    get k{init,ate,onsole,win-x11,sysguard,screen,hotkeys,dialog,id3-qt}
-    get k{menuedit,deconnect,infocenter,torrent,denlive,calc,rename}
-    get po{werdevil,lkit-kde-agent-1} dolphin{,-plugins} gwenview
-    get qml-module-org-kde-{kcm,newstuff} elisa librsvg2-common
-    get kio-extras ffmpegthumbs kwalletmanager systemsettings
-    get breeze{,-gtk-theme} gtk3-engines-breeze okular
+    install plasma-{nm,pa,{browser-,}integration,framework,workspace,desktop} sddm
+    install kde-{spectacle,config-{sddm,screenlocker,gtk-style{,-preview}}} ark
+    install k{init,ate,onsole,win-x11,sysguard,screen,hotkeys,dialog,id3-qt}
+    install k{menuedit,deconnect,infocenter,torrent,denlive,calc,rename}
+    install po{werdevil,lkit-kde-agent-1} dolphin{,-plugins} gwenview
+    install qml-module-org-kde-{kcm,newstuff} elisa librsvg2-common
+    install kio-extras ffmpegthumbs kwalletmanager systemsettings
+    install breeze{,-gtk-theme} gtk3-engines-breeze okular
 }
 
 if [[ "$1" == "exec" ]] && [[ $UID -eq 0 ]]; then
@@ -441,6 +483,7 @@ if [[ "$1" == "exec" ]] && [[ $UID -eq 0 ]]; then
     # Defina a marca de sua impressora
     # ou mantenha 'all' para adicionar suporte
     # para todas as impressoras suportadas pelo Debian.
+    # set_print epson -> para instalar suporte para EPSON e etc.
     set_print all
     
     get_apps
