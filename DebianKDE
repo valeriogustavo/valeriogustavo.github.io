@@ -27,8 +27,8 @@ function detect(){
 
         gpu)
             lspci -nn | egrep -i "3d|display|vga" > gpu.info
-            local -r INTEL=$(grep -i "intel" gpu.info | wc -l)
-            local -r NVIDIA=$(grep -i "nvidia" gpu.info | wc -l)
+            local -r INTEL=$(grep -i 'intel' gpu.info | wc -l)
+            local -r NVIDIA=$(grep -i 'nvidia' gpu.info | wc -l)
             local -r AMD=$(egrep -i "amd|radeon" gpu.info | wc -l)
             rm -f gpu.info
                 
