@@ -517,6 +517,8 @@ if [[ "$1" == "exec" ]] && [[ $UID -eq 0 ]]; then
     update-initramfs -c -k all
  
     sleep 10
+    #Desabilita a decoração da janela quando maximizada
+    kwriteconfig5 --file ~/.config/kwinrc --group Windows --key BorderlessMaximizedWindows true
     systemctl reboot
 elif [[ $UID -eq 0 ]]; then
     # Corrige o timeout do sudo.
