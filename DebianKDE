@@ -102,6 +102,7 @@ function get_keys(){
     $GET https://dl.xanmod.org/gpg.key | $KEY
     $GET https://deb.opera.com/archive.key | $KEY
     $GET https://dl.google.com/linux/linux_signing_key.pub | $KEY
+    $GET https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/plasma521/Debian_Testing/Release.key | $KEY
 }
 
 function get_apps(){
@@ -247,6 +248,13 @@ function set_repos(){
     $write '
         deb [arch=amd64] http://security.debian.org/debian-security testing-security main contrib non-free
     ' | clean > /etc/apt/sources.list.d/testing-security.list
+    
+    $write '
+        deb https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/frameworks/Debian_Testing/ ./
+        deb https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/plasma521/Debian_Testing/ ./
+        deb https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/apps2012/Debian_Testing/ ./
+        deb https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/other/Debian_Testing/ ./
+    ' | clean > /etc/apt/sources.list.d/npreining.list
 }
 
 function clean_system(){
