@@ -107,6 +107,7 @@ function get_keys(){
 
 function get_apps(){
     install linux-xanmod
+    install appmenu-gtk{2,3}-module
     install {opera,google-chrome}-stable chromium{,-l10n}
     install gimp{,-gmic,-data-extras,-plugin-registry} inkscape
     install audacity mkvtoolnix-gui vokoscreen winff-qt vlc{,-l10n}
