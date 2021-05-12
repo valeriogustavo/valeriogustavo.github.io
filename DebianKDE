@@ -6,7 +6,7 @@
 ## A partir do Debian Testing Netboot Básico.                                ##
 ## Escrito por Gustavo Valério Ferreira                                      ##
 ## gustavovalerio.com.br                                                     ##
-## 23/11/2020 - V 0.1.4                                                      ##
+## 12/05/2021 - V 0.1.5                                                      ##
 ###############################################################################
 
 ### Variáveis
@@ -254,6 +254,7 @@ function set_repos(){
         deb https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/plasma521/Debian_Testing/ ./
         deb https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/apps2012/Debian_Testing/ ./
         deb https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/other/Debian_Testing/ ./
+
     ' | clean > /etc/apt/sources.list.d/npreining.list
 }
 
@@ -302,8 +303,30 @@ function optimize_system(){
     systemctl mask apt-daily{,-upgrade}{.service,.timer} NetworkManager-wait-online.service 
     # Systemd às vezes não inicia o UFW
     systemctl enable ufw && ufw enable
+    
+    wget http://ftp.br.debian.org/debian/pool/main/p/prelink/prelink_0.0.20131005-1+b10_amd64.deb
+    wget http://ftp.br.debian.org/debian/pool/main/p/prelink/execstack_0.0.20131005-1+b10_amd64.deb
+    
+    if [[ -e './prelink_0.0.20131005-1+b10_amd64.deb' ]]; then
+        if [[ -e './execstack_0.0.20131005-1+b10_amd64.deb' ]]; then
+            dpkg -i *.deb
+            apt install -f
+            
+            
+            sed -i 's/PRELINKING=unknown/PRELINKING=yes/g'  /etc/default/prelink
+    
+            # Avisando ao KDE que ele está prelinkado
+            $write 'export KDE_IS_PRELINKED=1' > /etc/profile.d/kde-prelink.sh
 
-    install prel{oad,ink}
+            # Configurando o DPKG para executar o Prelink
+            # Sempre que houver remoção ou instalação de pacotes
+            $write '
+                DPkg::Post-Invoke {"sleep 2;/usr/sbin/prelink -amR";}
+                ' | clean > /etc/apt/apt.conf.d/10-prelink
+        fi
+    fi
+
+    install preload
     
     # Liberando portas para o KDE Connect
     ufw allow 1714:1764/tcp
@@ -313,21 +336,11 @@ function optimize_system(){
     sed -i 's/memfree = 50/memfree = 100/g'         /etc/preload.conf
     sed -i 's/memcached = 0/memcached = 30/g'       /etc/preload.conf
     sed -i 's/processes = 30/processes = 60/g'      /etc/preload.conf
-    sed -i 's/PRELINKING=unknown/PRELINKING=yes/g'  /etc/default/prelink
     sed -i 's/Logo=1/Logo=0/g'                      /etc/libreoffice/sofficerc
     
     # Seta lz4 para decompactar o kernel (boot +rápido)
     install lz4 liblz4-1
     sed -i 's/COMPRESS=gzip/COMPRESS=lz4/g' /etc/initramfs-tools/initramfs.conf
-    
-    # Avisando ao KDE que ele está prelinkado
-    $write 'export KDE_IS_PRELINKED=1' > /etc/profile.d/kde-prelink.sh
-
-    # Configurando o DPKG para executar o Prelink
-    # Sempre que houver remoção ou instalação de pacotes
-    $write '
-        DPkg::Post-Invoke {"sleep 2;/usr/sbin/prelink -amR";}
-        ' | clean > /etc/apt/apt.conf.d/10-prelink
 
     $write '
         #CORE
