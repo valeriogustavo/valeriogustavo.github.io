@@ -6,7 +6,7 @@
 ## A partir do Debian Testing Netboot Básico.                                ##
 ## Escrito por Gustavo Valério Ferreira                                      ##
 ## gustavovalerio.com.br                                                     ##
-## 12/05/2021 - V 0.1.5                                                      ##
+## 12/05/2021 - V 0.1.6                                                      ##
 ###############################################################################
 
 ### Variáveis
@@ -212,7 +212,6 @@ function lock_apps(){
     $write '
         APT::Periodic::Enable "0";
         APT::Cache-Limit "100000000";
-        APT::Default-Release "testing";
         APT::Periodic::Unattended-Upgrade "0";
         APT::Periodic::Update-Package-Lists "0";
     ' | clean > /etc/apt/apt.conf.d/99-z-apt
@@ -311,6 +310,9 @@ function optimize_system(){
         if [[ -e './execstack_0.0.20131005-1+b10_amd64.deb' ]]; then
             dpkg -i *.deb
             apt install -f
+            
+            rm prelink_0.0.20131005-1+b10_amd64.deb
+            rm execstack_0.0.20131005-1+b10_amd64.deb
             
             
             sed -i 's/PRELINKING=unknown/PRELINKING=yes/g'  /etc/default/prelink
