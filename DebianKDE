@@ -481,7 +481,7 @@ function optimize_system(){
 }
 
 function get_plasma_desktop(){
-    install plasma-{nm,pa,{browser-,}integration,framework,workspace,desktop} sddm
+    install plasma-{nm,pa,{browser-,}integration,framework,workspace{,-wayland},desktop} sddm
     install kde-{spectacle,config-{sddm,screenlocker,gtk-style{,-preview}}} ark
     install k{init,ate,onsole,win-x11,sysguard,screen,hotkeys,dialog,id3-qt}
     install k{menuedit,deconnect,infocenter,torrent,denlive,calc,rename}
