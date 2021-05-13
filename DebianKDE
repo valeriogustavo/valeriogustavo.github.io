@@ -128,7 +128,7 @@ function set_grub(){
         GRUB_TIMEOUT_STYLE=hidden
         GRUB_CMDLINE_LINUX_DEFAULT="quiet splash=silent"
         GRUB_DISTRIBUTOR=`lsb_release -i -s 2> /dev/null || echo Debian`
-        GRUB_CMDLINE_LINUX="mitigations=off loglevel=3 vga=current systemd.show_status=false rd.udev.log_priority=3 libahci.ignore_sss=1"
+        GRUB_CMDLINE_LINUX="mitigations=off nowatchdog loglevel=3 vga=current systemd.show_status=false rd.udev.log_priority=3 libahci.ignore_sss=1"
     ' | clean > /etc/default/grub
     
     $write '#KERNEL\nkernel.printk = 3 3 3 3\n\n' > /etc/sysctl.d/99-z-personal.conf 
