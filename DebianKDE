@@ -6,7 +6,7 @@
 ## A partir do Debian Testing Netboot Básico.                                ##
 ## Escrito por Gustavo Valério Ferreira                                      ##
 ## gustavovalerio.com.br                                                     ##
-## 12/05/2021 - V 0.1.7                                                      ##
+## 12/05/2021 - V 0.1.8                                                      ##
 ###############################################################################
 
 ### Variáveis
@@ -276,7 +276,7 @@ function get_essentials(){
     if   [[ "$CPU" == "AMD" ]]; then
         install amd64-microcode
     elif [[ "$CPU" == "Intel" ]]; then
-        install intel-microcode iucode-tool
+        install intel-{microcode,opencl-icd} iucode-tool
     fi
 
     
