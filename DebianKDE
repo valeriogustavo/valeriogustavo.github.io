@@ -252,7 +252,7 @@ function set_repos(){
     $write '
         deb https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/frameworks/Debian_Testing/ ./
         deb https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/plasma522/Debian_Testing/ ./
-        deb https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/apps2012/Debian_Testing/ ./
+        deb https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/apps2104/Debian_Testing/ ./
         deb https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/other/Debian_Testing/ ./
 
     ' | clean > /etc/apt/sources.list.d/npreining.list
