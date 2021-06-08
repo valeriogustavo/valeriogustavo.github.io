@@ -321,6 +321,7 @@ function optimize_system(){
     
             # Avisando ao KDE que ele está prelinkado
             $write 'export KDE_IS_PRELINKED=1' > /etc/profile.d/kde-prelink.sh
+            chmod +x /etc/profile.d/kde-prelink.sh
 
             # Configurando o DPKG para executar o Prelink
             # Sempre que houver remoção ou instalação de pacotes
@@ -336,7 +337,7 @@ function optimize_system(){
     ufw allow 1714:1764/tcp
     ufw allow 1714:1764/udp
 
-    # Configurando Preload, Prelink e o Libreoffice
+    # Configurando o Preload e o Libreoffice
     sed -i 's/memfree = 50/memfree = 100/g'         /etc/preload.conf
     sed -i 's/memcached = 0/memcached = 30/g'       /etc/preload.conf
     sed -i 's/processes = 30/processes = 60/g'      /etc/preload.conf
