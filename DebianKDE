@@ -209,8 +209,7 @@ function lock_apps(){
         Pin-Priority: 1
     ' | clean > /etc/apt/preferences.d/08-experimental
 
-    # Desativamos o autoupdate,
-    # Setamos a release principal
+    # Desativamos o autoupdate
     # E aumentamos o cache do apt.
     $write '
         APT::Periodic::Enable "0";
