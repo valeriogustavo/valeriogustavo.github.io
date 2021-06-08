@@ -6,7 +6,7 @@
 ## A partir do Debian Testing Netboot Básico.                                ##
 ## Escrito por Gustavo Valério Ferreira                                      ##
 ## gustavovalerio.com.br                                                     ##
-## 21/05/2021 - V 0.1.9                                                      ##
+## 8/6/2021 - V 0.1.10                                                      ##
 ###############################################################################
 
 ### Variáveis
@@ -109,6 +109,7 @@ function get_keys(){
 function get_apps(){
     install linux-xanmod
     install appmenu-gtk{2,3}-module
+    install firefox{,-l10n-pt-br}/experimental
     install {opera,google-chrome}-stable chromium{,-l10n}
     install gimp{,-gmic,-data-extras,-plugin-registry} inkscape
     install audacity mkvtoolnix-gui vokoscreen winff-qt vlc{,-l10n}
