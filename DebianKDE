@@ -102,7 +102,8 @@ function get_keys(){
     $GET https://dl.xanmod.org/gpg.key | $KEY
     $GET https://deb.opera.com/archive.key | $KEY
     $GET https://dl.google.com/linux/linux_signing_key.pub | $KEY
-    $GET https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/plasma521/Debian_Testing/Release.key | $KEY
+    $GET https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/frameworks/Debian_Testing/Release.key | $KEY
+   
 }
 
 function get_apps(){
