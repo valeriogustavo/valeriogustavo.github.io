@@ -6,7 +6,7 @@
 ## A partir do Debian Testing Netboot Básico.                                ##
 ## Escrito por Gustavo Valério Ferreira                                      ##
 ## gustavovalerio.com.br                                                     ##
-## 8/6/2021 - V 0.1.10                                                      ##
+## 8/7/2021 - V 0.1.11                                                      ##
 ###############################################################################
 
 ### Variáveis
@@ -112,7 +112,7 @@ function get_apps(){
     install firefox{,-l10n-pt-br}/experimental
     install {opera,google-chrome}-stable chromium{,-l10n}
     install gimp{,-gmic,-data-extras,-plugin-registry} inkscape
-    install audacity mkvtoolnix-gui vokoscreen winff-qt vlc{,-l10n}
+    install audacity mkvtoolnix-gui vokoscreen-ng winff-qt vlc{,-l10n}
     install libreoffice-{style-sifr,calc,writer,{l10n,lightproof}-pt-br,{kf,qt}5}
     
 }
@@ -127,7 +127,6 @@ function set_grub(){
     $write '
         GRUB_DEFAULT=0
         GRUB_TIMEOUT=0
-        GRUB_TIMEOUT_STYLE=hidden
         GRUB_CMDLINE_LINUX_DEFAULT="quiet splash=silent"
         GRUB_DISTRIBUTOR=`lsb_release -i -s 2> /dev/null || echo Debian`
         GRUB_CMDLINE_LINUX="mitigations=off nowatchdog loglevel=3 vga=current systemd.show_status=false rd.udev.log_priority=3 libahci.ignore_sss=1"
@@ -483,8 +482,8 @@ function optimize_system(){
 }
 
 function get_plasma_desktop(){
-    install plasma-{nm,pa,{browser-,}integration,framework,firewall,workspace{,-wayland},desktop} sddm
-    install kde-{spectacle,config-{sddm,screenlocker,gtk-style{,-preview}}} frei0r-plugins
+    install plasma-{nm,pa,{browser-,}integration,framework,firewall,workspace{,-wayland},desktop,widgets-addons}
+    install kde-{spectacle,config-{sddm,screenlocker,gtk-style{,-preview}}} frei0r-plugins sddm
     install k{init,ate,onsole,win-x11,sysguard,screen,hotkeys,dialog,id3-qt} ark
     install k{menuedit,deconnect,infocenter,torrent,denlive,calc,rename}
     install po{werdevil,lkit-kde-agent-1} dolphin{,-plugins} gwenview
@@ -521,7 +520,7 @@ if [[ "$1" == "exec" ]] && [[ $UID -eq 0 ]]; then
  
     sleep 10
     #Desabilita a decoração da janela quando maximizada
-    kwriteconfig5 --file ~/.config/kwinrc --group Windows --key BorderlessMaximizedWindows true
+    #kwriteconfig5 --file ~/.config/kwinrc --group Windows --key BorderlessMaximizedWindows true
     systemctl reboot
 elif [[ $UID -eq 0 ]]; then
     # Corrige o timeout do sudo.
