@@ -213,7 +213,7 @@ function lock_apps(){
     # via repositório experimental.
     $write '
         Package: libreoffice*
-        Pin: release a=experimental
+        Pin: release a=unstable
         Pin-Priority: 500
 
         Package: firefox*
