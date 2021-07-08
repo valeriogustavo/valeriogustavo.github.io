@@ -6,7 +6,7 @@
 ## A partir do Debian Testing Netboot Básico.                                ##
 ## Escrito por Gustavo Valério Ferreira                                      ##
 ## gustavovalerio.com.br                                                     ##
-## 8/7/2021 - V 0.1.11.1                                                     ##
+## 8/7/2021 - V 0.1.11.2                                                     ##
 ###############################################################################
 
 ### Variáveis
@@ -78,7 +78,7 @@ function set_print(){
                 local -r EPSON='/usr/share/applications/epsonscan2.desktop'
                 if [[ -e "$EPSON" ]]; then
                     sed -i 's/Epson Scan 2/Digitalizar/g' "$EPSON"
-                    sed -i "s/Icon=.*$/Icon=simple-scan/g" "$EPSON"
+                    sed -i "s/Icon=.*$/Icon=skanlite/g" "$EPSON"
                     
                     rm -rf ./epsonscan2{.tar.gz,-*/}
                 fi
@@ -209,6 +209,22 @@ function lock_apps(){
         Pin-Priority: 1
     ' | clean > /etc/apt/preferences.d/08-experimental
 
+    # Configurando alguns pacotes para serem atualizados
+    # via repositório experimental.
+    $write '
+        Package: libreoffice*
+        Pin: release a=experimental
+        Pin-Priority: 500
+
+        Package: firefox*
+        Pin: release a=experimental
+        Pin-Priority: 500
+
+        Package: *-icon-theme*
+        Pin: release a=experimental
+        Pin-Priority: 500
+    ' | clean > /etc/apt/preferences.d/09-softwares
+
     # Desativamos o autoupdate
     # E aumentamos o cache do apt.
     $write '
@@ -291,7 +307,7 @@ function get_essentials(){
         install xserver-xorg-video-all
     fi
     
-    install pulseaudio{,-utils} nano x{init,auth,server-xorg-core} irqbalance ufw thermald python-is-python3
+    install pulseaudio{,-utils,-module-gsettings} nano x{init,auth,server-xorg-core} irqbalance ufw thermald python-is-python3
 }
 
 function optimize_system(){
