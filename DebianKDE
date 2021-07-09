@@ -210,18 +210,18 @@ function lock_apps(){
     ' | clean > /etc/apt/preferences.d/08-experimental
 
     # Configurando alguns pacotes para serem atualizados
-    # via repositório experimental.
+    # pela versão mais recente via Unstable ou Experimental.
     $write '
         Package: libreoffice*
         Pin: release a=unstable
         Pin-Priority: 500
 
         Package: firefox*
-        Pin: release a=experimental
+        Pin: release o=Debian
         Pin-Priority: 500
 
         Package: *-icon-theme*
-        Pin: release a=experimental
+        Pin: release o=Debian
         Pin-Priority: 500
     ' | clean > /etc/apt/preferences.d/09-softwares
 
