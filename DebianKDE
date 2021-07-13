@@ -6,7 +6,7 @@
 ## A partir do Debian Testing Netboot Básico.                                ##
 ## Escrito por Gustavo Valério Ferreira                                      ##
 ## gustavovalerio.com.br                                                     ##
-## 8/7/2021 - V 0.1.11.2                                                     ##
+## 12/7/2021 - V 0.2                                                         ##
 ###############################################################################
 
 ### Variáveis
@@ -88,7 +88,12 @@ function set_print(){
             install cups-backend-bjnp printer-driver-cjet ;;
        
         * | 'all')
-            install printer-driver-all skanlite sane{,-utils} ;;
+            set_print hp
+            set_print pdf
+            set_print epson
+            set_print cannon
+            install printer-driver-all skanlite sane{,-utils}            
+            ;;
     esac
     
 }
@@ -100,7 +105,6 @@ function get_keys(){
     install wget gnupg ca-certificates
     
     $GET https://dl.xanmod.org/gpg.key | $KEY
-    $GET https://deb.opera.com/archive.key | $KEY
     $GET https://dl.google.com/linux/linux_signing_key.pub | $KEY
     $GET https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/frameworks/Debian_Testing/Release.key | $KEY
    
@@ -109,11 +113,10 @@ function get_keys(){
 function get_apps(){
     install linux-xanmod
     install appmenu-gtk{2,3}-module
-    install firefox{,-l10n-pt-br}/experimental
+    install papirus-icon-theme vlc{,-l10n}
     install gstreamer1.0-plugins-{bad,good,ugly}
-    install {opera,google-chrome}-stable chromium{,-l10n}
+    install firefox{,-l10n-pt-br} google-chrome-stable
     install gimp{,-gmic,-data-extras,-plugin-registry} inkscape
-    install audacity mkvtoolnix-gui vokoscreen-ng winff-qt vlc{,-l10n}
     install libreoffice-{style-sifr,calc,writer,{l10n,lightproof}-pt-br,{kf,qt}5}
     
 }
@@ -127,7 +130,7 @@ function set_grub(){
 
     $write '
         GRUB_DEFAULT=0
-        GRUB_TIMEOUT=0
+        GRUB_TIMEOUT=1
         GRUB_CMDLINE_LINUX_DEFAULT="quiet splash=silent"
         GRUB_DISTRIBUTOR=`lsb_release -i -s 2> /dev/null || echo Debian`
         GRUB_CMDLINE_LINUX="mitigations=off nowatchdog loglevel=3 vga=current systemd.show_status=false rd.udev.log_priority=3 libahci.ignore_sss=1"
@@ -452,26 +455,6 @@ function optimize_system(){
     
     # Corrige o problema de rede não gerenciável
     mv /etc/network/interfaces{,.orig}
-
-    # O sistema não cria um atalho para o WinFF.
-    if [[ ! -e /usr/share/applications/winff.desktop ]]; then
-        $write '
-            [Desktop Entry]
-            Comment=
-            Exec=winff-qt
-            Icon=winff
-            Name=WinFF
-            NoDisplay=false
-            Path[$e]=
-            StartupNotify=true
-            Terminal=0
-            TerminalOptions=
-            Type=Application
-            X-KDE-SubstituteUID=false
-            X-KDE-Username=
-            Categories=AudioVideo;Audio;AudioVideoEditing;
-        ' | clean > /usr/share/applications/winff.desktop
-    fi
     
     # Habilita um RAMDISK, melhora o desempenho do sistema.
     cp /usr/share/systemd/tmp.mount /etc/systemd/system/
@@ -482,13 +465,6 @@ function optimize_system(){
         sed -i 's/GNU Image Manipulation Program/Gimp/g' "$GIMP"
         sed -i 's/Programa de Manipulação de Imagens GNU/Gimp/g' "$GIMP"
         sed -i 's/Programa de manipulação de imagem do GNU/Gimp/g' "$GIMP"
-    fi
-    
-    local -r CHROMIUM='/usr/share/applications/chromium.desktop'
-    if [[ -e "$CHROMIUM" ]]; then
-        sed -i 's/Chromium Web Browser/Chromium/g' "$CHROMIUM"
-        sed -i 's/Navegador da Internet/Chromium/g' "$CHROMIUM"
-        sed -i 's/Chromium Navegador da Internet/Chromium/g' "$CHROMIUM"
     fi
     
     local -r VLC='/usr/share/applications/vlc.desktop'
@@ -526,7 +502,7 @@ if [[ "$1" == "exec" ]] && [[ $UID -eq 0 ]]; then
     # ou mantenha 'all' para adicionar suporte
     # para todas as impressoras suportadas pelo Debian.
     # set_print epson -> para instalar suporte para EPSON e etc.
-    set_print all
+    set_print epson
     
     get_apps
     clean_system
