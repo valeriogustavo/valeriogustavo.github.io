@@ -111,7 +111,7 @@ function get_keys(){
 }
 
 function get_apps(){
-    install linux-xanmod
+    install linux-xanmod-edge
     install appmenu-gtk{2,3}-module
     install papirus-icon-theme vlc{,-l10n}
     install gstreamer1.0-plugins-{bad,good,ugly}
