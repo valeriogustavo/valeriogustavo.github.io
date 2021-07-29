@@ -6,7 +6,7 @@
 ## A partir do Debian Testing Netboot Básico.                                ##
 ## Escrito por Gustavo Valério Ferreira                                      ##
 ## gustavovalerio.com.br                                                     ##
-## 12/7/2021 - V 0.2                                                         ##
+## 29/7/2021 - V 0.2.1                                                       ##
 ###############################################################################
 
 ### Variáveis
@@ -244,10 +244,6 @@ function set_repos(){
     $write '
         deb [arch=amd64] http://deb.xanmod.org releases main
     ' | clean > /etc/apt/sources.list.d/xanmod-kernel.list
-    
-    $write '
-        deb [arch=amd64] https://deb.opera.com/opera-stable stable non-free
-    ' | clean > /etc/apt/sources.list.d/opera-stable.list
     
     $write '
         deb [arch=amd64] https://dl.google.com/linux/chrome/deb stable main
