@@ -6,7 +6,7 @@
 ## A partir do Debian Testing Netboot Básico.                                ##
 ## Escrito por Gustavo Valério Ferreira                                      ##
 ## gustavovalerio.com.br                                                     ##
-## 26/8/2021 - V 0.2.2                                                       ##
+## 26/8/2021 - V 0.3.1                                                       ##
 ###############################################################################
 
 ### Variáveis
@@ -319,43 +319,52 @@ function optimize_system(){
     systemctl mask apt-daily{,-upgrade}{.service,.timer} NetworkManager-wait-online.service 
     # Systemd às vezes não inicia o UFW
     systemctl enable ufw && ufw enable
-    
-    wget http://ftp.br.debian.org/debian/pool/main/p/prelink/prelink_0.0.20131005-1+b10_amd64.deb
-    wget http://ftp.br.debian.org/debian/pool/main/p/prelink/execstack_0.0.20131005-1+b10_amd64.deb
-    
-    if [[ -e './prelink_0.0.20131005-1+b10_amd64.deb' ]]; then
-        if [[ -e './execstack_0.0.20131005-1+b10_amd64.deb' ]]; then
-            dpkg -i *.deb
-            apt install -f
-            
-            rm prelink_0.0.20131005-1+b10_amd64.deb
-            rm execstack_0.0.20131005-1+b10_amd64.deb
-            
-            
-            sed -i 's/PRELINKING=unknown/PRELINKING=yes/g'  /etc/default/prelink
-    
-            # Avisando ao KDE que ele está prelinkado
-            $write 'export KDE_IS_PRELINKED=1' > /etc/profile.d/kde-prelink.sh
-            chmod +x /etc/profile.d/kde-prelink.sh
 
-            # Configurando o DPKG para executar o Prelink
-            # Sempre que houver remoção ou instalação de pacotes
-            $write '
-                DPkg::Post-Invoke {"sleep 2;/usr/sbin/prelink -amR";}
-                ' | clean > /etc/apt/apt.conf.d/10-prelink
-        fi
-    fi
-
-    install preload
-    
     # Liberando portas para o KDE Connect
     ufw allow 1714:1764/tcp
     ufw allow 1714:1764/udp
 
-    # Configurando o Preload e o Libreoffice
-    sed -i 's/memfree = 50/memfree = 100/g'         /etc/preload.conf
-    sed -i 's/memcached = 0/memcached = 30/g'       /etc/preload.conf
-    sed -i 's/processes = 30/processes = 60/g'      /etc/preload.conf
+
+    if [[ $MEM -ge 6 ]]; then
+        wget http://ftp.br.debian.org/debian/pool/main/p/prelink/prelink_0.0.20131005-1+b10_amd64.deb
+        wget http://ftp.br.debian.org/debian/pool/main/p/prelink/execstack_0.0.20131005-1+b10_amd64.deb
+
+        if [[ -e './prelink_0.0.20131005-1+b10_amd64.deb' ]]; then
+            if [[ -e './execstack_0.0.20131005-1+b10_amd64.deb' ]]; then
+                dpkg -i *.deb
+                apt install -f
+
+                rm prelink_0.0.20131005-1+b10_amd64.deb
+                rm execstack_0.0.20131005-1+b10_amd64.deb
+
+
+                sed -i 's/PRELINKING=unknown/PRELINKING=yes/g'  /etc/default/prelink
+
+                # Avisando ao KDE que ele está prelinkado
+                $write 'export KDE_IS_PRELINKED=1' > /etc/profile.d/kde-prelink.sh
+                chmod +x /etc/profile.d/kde-prelink.sh
+
+                # Configurando o DPKG para executar o Prelink
+                # Sempre que houver remoção ou instalação de pacotes
+                $write '
+                    DPkg::Post-Invoke {"sleep 2;/usr/sbin/prelink -amR";}
+                    ' | clean > /etc/apt/apt.conf.d/10-prelink
+            fi
+        fi
+
+        install preload
+
+        # Habilita um RAMDISK, melhora o desempenho do sistema.
+        cp /usr/share/systemd/tmp.mount /etc/systemd/system/
+        systemctl enable tmp.mount
+
+        # Configurando o Preload e o Libreoffice
+        sed -i 's/memfree = 50/memfree = 100/g'         /etc/preload.conf
+        sed -i 's/memcached = 0/memcached = 30/g'       /etc/preload.conf
+        sed -i 's/processes = 30/processes = 60/g'      /etc/preload.conf
+    fi
+
+    # Configurando o Libreoffice
     sed -i 's/Logo=1/Logo=0/g'                      /etc/libreoffice/sofficerc
     
     # Seta lz4 para decompactar o kernel (boot +rápido)
@@ -451,10 +460,6 @@ function optimize_system(){
     
     # Corrige o problema de rede não gerenciável
     mv /etc/network/interfaces{,.orig}
-    
-    # Habilita um RAMDISK, melhora o desempenho do sistema.
-    cp /usr/share/systemd/tmp.mount /etc/systemd/system/
-    systemctl enable tmp.mount
     
     local -r GIMP='/usr/share/applications/gimp.desktop'
     if [[ -e "$GIMP" ]]; then
