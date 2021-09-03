@@ -362,6 +362,11 @@ function optimize_system(){
         sed -i 's/memfree = 50/memfree = 100/g'         /etc/preload.conf
         sed -i 's/memcached = 0/memcached = 30/g'       /etc/preload.conf
         sed -i 's/processes = 30/processes = 60/g'      /etc/preload.conf
+        
+        
+        # Executamos o Prelink com a opção -R ativa
+        # Isso ramdomiza os binários e melhora a segurança.
+        prelink -amvR
     fi
 
     # Configurando o Libreoffice
@@ -453,10 +458,6 @@ function optimize_system(){
             vm.dirty_ratio = 15
         ' | clean >> $SYSCTL
     fi
-    
-    # Executamos o Prelink com a opção -R ativa
-    # Isso ramdomiza os binários e melhora a segurança.
-    prelink -amvR
     
     # Corrige o problema de rede não gerenciável
     mv /etc/network/interfaces{,.orig}
