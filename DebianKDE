@@ -6,7 +6,7 @@
 ## A partir do Debian Testing Netboot Básico.                                ##
 ## Escrito por Gustavo Valério Ferreira                                      ##
 ## gustavovalerio.com.br                                                     ##
-## 3/9/2021 - V 0.3.2                                                        ##
+## 3/9/2021 - V 0.3.3                                                        ##
 ###############################################################################
 
 ### Variáveis
@@ -26,10 +26,10 @@ function detect(){
             fi ;;
 
         gpu)
-            lspci -nn | egrep -i "3d|display|vga" > gpu.info
+            lspci -nn | grep -i "3d\|display\|vga" > gpu.info
             local -r INTEL=$(grep -ic 'intel' gpu.info)
             local -r NVIDIA=$(grep -ic 'nvidia' gpu.info)
-            local -r AMD=$(egrep -ic "amd|radeon" gpu.info)
+            local -r AMD=$(grep -ic "amd\|radeon" gpu.info)
             rm -f gpu.info
                 
             if   [[ $AMD -gt 0 ]]; then
@@ -370,7 +370,7 @@ function optimize_system(){
     fi
 
     # Configurando o Libreoffice
-    sed -i 's/Logo=1/Logo=0/g'                      /etc/libreoffice/sofficerc
+    sed -i 's/Logo=1/Logo=0/g' /etc/libreoffice/sofficerc
     
     # Seta lz4 para decompactar o kernel (boot +rápido)
     install lz4 liblz4-1
