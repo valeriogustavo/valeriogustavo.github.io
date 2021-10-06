@@ -1,5 +1,8 @@
-# Generator M3U8
+# [Generator M3U8](https://github.com/valeriogustavo/valeriogustavo.github.io/blob/main/GeneratorM3U8)
 By Gustavo Valério -> www.gustavovalerio.com.br
+
+Go to Script -> [CLICK](https://github.com/valeriogustavo/valeriogustavo.github.io/blob/main/GeneratorM3U8)
+
 
 
 Generate your m3u8 playlists from organized files.
