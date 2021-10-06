@@ -38,3 +38,13 @@ The correct structure, so that the covers are used correctly, should look like t
 * Episodes can have any name. Its extension must be MKV, the extension chosen because it allows the transmission of several subtitles and audio files.
 
 ![Series](https://github.com/valeriogustavo/valeriogustavo.github.io/blob/main/images/Series.jpg)
+
+
+# Para adionar um diretório na lista, use
+`./GeneratorM3U8 /path/to/directory`
+
+# Para visualizar, atualizar ou apagar diretórios da lista, use
+`./GeneratorM3U8`
+
+Your lists will be displayed on the screen and the available options will be visible
+
