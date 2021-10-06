@@ -7,7 +7,7 @@
 ################################################################################
 
 readonly VERSION="0.1.6"
-readonly ENABLE_LIST_PUBLIC="True"
+readonly ENABLE_LIST_PUBLIC="False"
 readonly DATE="$(date +%d/%m/%Y' '%H:%M)"
 
 readonly DIR_CONF="${HOME}/.GeneratorM3U8"
