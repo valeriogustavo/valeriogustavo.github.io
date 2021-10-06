@@ -1,5 +1,7 @@
 # [Generator M3U8](https://github.com/valeriogustavo/valeriogustavo.github.io/blob/main/GeneratorM3U8)
+### M3u8 playlist generator for SSIPTV, Perfect Player and Kodi PVR
 By Gustavo Valério -> www.gustavovalerio.com.br
+
 
 Go to Script -> [CLICK](https://github.com/valeriogustavo/valeriogustavo.github.io/blob/main/GeneratorM3U8)
 
