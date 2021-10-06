@@ -1,0 +1,558 @@
+#!/bin/bash
+
+################################################################################
+#####  M3u8 playlist generator for SSIPTV, Perfect Player and Kodi PVR     #####
+#####  By Gustavo Valério Ferreira - gustavovalerio.com.br                 #####
+#####  Version 0.1.6 - 15/9/2021                                           #####
+################################################################################
+
+readonly VERSION="0.1.6"
+readonly ENABLE_LIST_PUBLIC="True"
+readonly DATE="$(date +%d/%m/%Y' '%H:%M)"
+
+readonly DIR_CONF="${HOME}/.GeneratorM3U8"
+readonly DIR_PUBLIC="${DIR_CONF}/Public"
+readonly LISTS_DB="${DIR_CONF}/lists.csv"
+readonly ERRORS_LOG="${DIR_CONF}/errors.log"
+
+readonly PORT_LOCAL="8000"
+readonly PORT_PUBLIC="9090"
+
+readonly LIST_EXT=".m3u8"
+readonly LIST_PUBLIC="${DIR_PUBLIC}/public${LIST_EXT}"
+readonly LIST_LOCAL="${DIR_PUBLIC}/list${LIST_EXT}"
+
+readonly URL_PUBLIC="http://100.64.0.11:${PORT_PUBLIC}"
+readonly URL_LOCAL="http://192.168.254.253:${PORT_LOCAL}"
+
+readonly FILEPATHS="/tmp/filepaths"
+readonly FILENAMES="/tmp/filenames"
+readonly COVERPATHS="/tmp/coverpaths"
+readonly FILE="/tmp/generatorM3U8.tmp"
+readonly FILEDURATION="/tmp/fileduration"
+
+# VAR UTILS ####################################################################
+
+readonly template="| -> %-71s |\n"
+readonly separator="+--------------------------------------------------------\
+--------------------------+"
+
+# UTILS ########################################################################
+
+function checkConfs(){
+    if   [[ ! -d "$DIR_CONF" ]]; then
+        mkdir -p $DIR_CONF
+    fi
+
+    if [[ ! -d "$DIR_PUBLIC" ]]; then
+        mkdir -p $DIR_PUBLIC
+    fi
+
+    if [[ ! -f "$LISTS_DB" ]] || [[ "$1" == "-f" ]]; then
+        echo "#ID;KEY;NAME;UPDATED" > $LISTS_DB
+    fi
+}
+
+function errMsg(){
+    local msg
+    case "$1" in
+        rmList) msg="List removed" ;;
+        noOpt) msg="Invalid option" ;;
+        dirExists) msg="Directory exists" ;;
+        noRmList) msg="Error removing list" ;;
+        noDir) msg="Directory does not exist" ;;
+        noLists) msg="No lists. Nothing to do" ;;
+        failedList) msg="Failed to create list" ;;
+        failedUpdList) msg="Failed to update list" ;;
+        noFileTMP) msg="Failed to create temporary file" ;;
+        noMKV) msg="Directory does not contain MKV files" ;;
+        *) msg="Unknown failure" ;;
+    esac
+
+    echo "$separator"
+    printf "| %3s | %-65b | -> |%4s\n" "MSG" "$msg" " - |"
+    echo -e "$separator\n"
+}
+
+function detect-type-list(){
+    local -r listFiles=($(printf "%s\n" "${DIR_PUBLIC}/${1}/*"))
+    local -r listDirs=($(printf "%s\n" "${DIR_PUBLIC}/${1}/*/"))
+
+    if [[ "${#listDirs[@]}" -ne "${#listFiles[@]}" ]]; then
+        echo f
+    else
+        echo d
+    fi
+}
+
+function sanitize(){
+    sed '
+         s|^[ \t]*||
+         s/[ ]\+/ /g
+         /./,$!d
+        ' $1
+}
+
+function urlize(){
+    if [[ -z "$1" ]]; then
+        return 1
+    fi
+
+      sed "
+           s#${DIR_PUBLIC}#${URL_LOCAL}#g
+           s#%#%25#g
+           s# #%20#g
+           s#'#%27#g
+           s|#|%23|g
+           s#!#%21#g
+           s#&#%26#g
+           s#(#%28#g
+           s#)#%29#g
+           "  "$1"
+}
+
+# RENDER #######################################################################
+
+function render-file-durations(){
+    local -a files
+
+    if [[ ! -f "$FILE" ]]; then
+        errMsg noFileTMP
+        return 1
+    fi
+
+    mapfile -t files < "${FILE}"
+
+    if [[ "${#files[@]}" -gt "1" ]]; then
+
+        if [[ -f "$FILEDURATION" ]]; then
+            rm -f "$FILEDURATION"
+        fi
+
+        local -i count="0"
+        for file in "${files[@]}"; do
+            ffprobe -v quiet -print_format\
+            compact=print_section=0:nokey=1:escape=csv\
+            -show_entries format=duration "$file" >> "$FILEDURATION"
+            if [[ "$(($count%4))" == "0" ]]; then
+                echo -n "."
+            fi
+            ((count++))
+        done
+
+        sed -i 's/\..*$//g' "$FILEDURATION"
+    fi
+
+    unset files
+}
+
+function render-files(){
+    find "$2" -name "*.mkv" 2>> $ERRORS_LOG | sort -bg > $FILE
+    sed -i "s#//#/#g" $FILE
+
+    cp -f $FILE $FILENAMES 2>> $ERRORS_LOG
+    urlize "$FILE" > "$FILEPATHS"
+    cp -f $FILEPATHS $COVERPATHS 2>> $ERRORS_LOG
+
+    sed -i '
+            s@^.*/\(.*\)\.mkv$@\1@g
+            s@[ ]\+@ @g
+            s@\,@@g
+           ' $FILENAMES
+
+    if [[ "$1" == "-d" ]]; then
+        sed -i 's@^\(.*/\)\(.*/.*\)/.*$@\1\2/.cover.jpg?\2@g' $COVERPATHS
+        sed -i '
+             :a;s@/\([^?]\+\)$@\1@;ta
+             :a;s@%20\([^?]\+\)$@\1@;ta
+             ' $COVERPATHS
+    else
+        sed -i "s@^\(.*/\)\(.*\)mkv\$@\1.covers/\2jpg@g" \
+                                                                     $COVERPATHS
+    fi
+
+    render-file-durations
+}
+
+function render-list(){
+    local listType
+    local msg=" +  Adding"
+    local name=$(grep -s -m1 ";${1};" $LISTS_DB | cut -d ';' -f3)
+    local -l nameLower="$name"
+    local pathList="${DIR_PUBLIC}/${nameLower}${LIST_EXT}"
+
+    if [[ "$2" == "-u" ]] || [[ "$3" == "-u" ]]; then
+        msg=" *  Updating"
+    fi
+
+    if [[ "$2" != "sb" ]]; then
+        listType=$(detect-type-list "$1")
+    elif [[ "$2" == "sb" ]]; then
+        pathList="$4"
+        name="${1%/}"
+        name="${name##*/}"
+        msg="$msg subdirectory"
+    fi
+
+    echo -n "${msg} ${name}..."
+
+    if [[ ! -f "$pathList" ]] || [[  "$2" == "-u" ]]; then
+        set-m3u8-header > $pathList
+    fi
+
+    if [[ "$listType" == "f" ]]; then
+        render-files -f "${DIR_PUBLIC}/${1}/"
+    elif [[ "$listType" == "d" ]] && [[ "$2" != "sb" ]]; then
+        echo
+        local -a dirs=($(printf "%s\n" "${DIR_PUBLIC}/${1}/*/"))
+        for dir in "${dirs[@]}"; do
+            render-list "$dir" sb "$2" "$pathList"
+        done
+        return
+    elif [[ "$2" == "sb" ]]; then
+        render-files -d "${1}/"
+    fi
+
+    local -a filePaths
+    local -a fileNames
+    local -a coverPaths
+    local -a fileDuration
+
+    mapfile -t filePaths < "$FILEPATHS"
+    mapfile -t fileNames < "$FILENAMES"
+    mapfile -t coverPaths < "$COVERPATHS"
+    mapfile -t fileDuration < "$FILEDURATION"
+
+    for ((i=0; i<"${#filePaths[@]}"; i++)); do
+        echo -e "#EXTINF:${fileDuration[$i]} type=\"video\" \
+        tvg-logo=\"${coverPaths[$i]}\" group-title=\"${name}\", \
+        ${fileNames[$i]}\n${filePaths[$i]}" | sanitize >> "$pathList"
+    done
+
+    unset filePaths fileNames coverPaths fileDuration
+
+    echo " Ok"
+}
+
+# CRUD #########################################################################
+
+function create-list(){
+    if [[ -z "$1" ]] &&  [[ -z "$2" ]] &&  [[ -z "$3" ]] &&  [[ -z "$4" ]]; then
+        errMsg failedList
+        return 1
+    fi
+
+    echo "${1};${2};${3};${4}" >> $LISTS_DB 2>> $ERRORS_LOG
+
+    render-list "$2"
+    update-main
+}
+
+function update-list(){
+    cp -u "${LISTS_DB}"{,.bkp} 2>> $ERRORS_LOG
+
+    if [[ "$1" == "A" ]]; then
+        while IFS=";" read -r bid bkey bname bdate; do
+            if [[ "$bid" == "#ID" ]]; then
+                echo -e "    UPDATING ALL LISTS\n"
+            else
+                update-list "${bid}" -u
+            fi
+        done < "${LISTS_DB}.bkp"
+
+        if [[ "$?" == "0" ]]; then
+            update-main
+            echo
+            return
+        fi
+    else
+        local date=$(date +%d/%m/%Y' '%H:%M)
+        local key=$(grep -s -m1 "^${1};" $LISTS_DB 2>> $ERRORS_LOG \
+                                               | cut -d ';' -f2 2>> $ERRORS_LOG)
+
+        if [[ -z "$key" ]]; then
+            errMsg
+            return 1
+        fi
+        render-list "${key}" -u
+
+        if [[ "$2" != "-u" ]]; then
+            update-main
+        fi
+
+        if [[ "$?" -eq "0" ]]; then
+            sed -i "s@^\($1;.*;.*;\).*\$@\1$DATE@g" $LISTS_DB
+            return
+        fi
+    fi
+
+    errMsg failedUpdList
+    cp -f "${LISTS_DB}"{.bkp,} 2>> $ERRORS_LOG
+}
+
+function update-main(){
+    echo -n " *  Updating Main..."
+
+    if [[ -f "$LIST_LOCAL" ]]; then
+        rm -r "$LIST_LOCAL"
+        echo -n ".."
+        if [[ -f "$LIST_PUBLIC" ]]; then
+            rm -r "$LIST_PUBLIC"
+            echo -n ".."
+        fi
+    fi
+
+    local -r allLists=($(printf "%s\n" "${DIR_PUBLIC}/*${LIST_EXT}"))
+
+    if [[ "${allLists/$LIST_EXT/}" != "${DIR_PUBLIC}/*" ]]; then
+        set-m3u8-header > "$LIST_LOCAL"
+        echo -n ".."
+        for list in "${allLists[@]}"; do
+            sed -n '7,$p' "$list" >> "$LIST_LOCAL"
+            echo -n ".."
+        done
+        sed -i '/^$/d' "$LIST_LOCAL"
+        echo -n ".."
+        if [[ "$ENABLE_LIST_PUBLIC" == "True" ]]; then
+            sed "s@$URL_LOCAL@$URL_PUBLIC@g" "$LIST_LOCAL" > "$LIST_PUBLIC"
+            echo -n ".."
+        fi
+    fi
+
+    echo " Ok"
+}
+
+function update-database(){
+    echo -n " -  Updating Database..."
+    cp -u "${LISTS_DB}"{,.bkp} 2>> $ERRORS_LOG
+
+    local -i count="0"
+    while IFS=";" read -r bid bkey bname bdate; do
+        if [[ "$bid" == "#ID" ]]; then
+            echo "${bid};${bkey};${bname};${bdate}" > $LISTS_DB
+        else
+            echo "${count};${bkey};${bname};${bdate}" >> $LISTS_DB
+        fi
+        ((count++))
+        echo -n ".."
+    done < "${LISTS_DB}.bkp"
+
+    echo " Ok"
+}
+
+function delete-list(){
+    if [[ "$1" == "A" ]]; then
+        echo -n " -  Deleting all lists..."
+        rm -rf $DIR_PUBLIC
+        echo -n "....."
+        if [[ ! -d "$DIR_PUBLIC" ]]; then
+            echo -n "....."
+            echo -e " Ok\n"
+            checkConfs -f
+            return
+        fi
+    else
+        local id=$(grep -s -m1 "^${1};" $LISTS_DB | cut -d ';' -f1)
+        local key=$(grep -s -m1 "^${1};" $LISTS_DB | cut -d ';' -f2)
+        local name=$(grep -s -m1 "^${1};" $LISTS_DB | cut -d ';' -f3)
+        local tag=$(get-tag "$key")
+
+        if [[ -z "$id" ]] || [[ "$id" == "0" ]]; then
+            errMsg
+            return 1
+        fi
+
+        echo -n " -  Deleting list ${name}..."
+        sed -i "s/^${id};.*$//" "$LISTS_DB"
+        echo -n "..."
+        rm -rf "${DIR_PUBLIC}/${key}" 2>> $ERRORS_LOG
+        echo -n "..."
+        rm -f "${DIR_PUBLIC}/${tag}${LIST_EXT}" 2>> $ERRORS_LOG
+        echo -n "..."
+        sed -i '/^$/d' "$LISTS_DB"
+        echo -n "..."
+        echo " Ok"
+        update-database
+        update-main
+        if [[ "$?" == "0" ]]; then
+            return
+        fi
+    fi
+
+    errMsg noRmList
+}
+
+# GETTERS ######################################################################
+
+function get-tag(){
+    local -l name=$(grep -s -m1 ";$1;" $LISTS_DB | cut -d ';' -f3)
+    echo "$name" | iconv -f UTF8 -t ASCII//TRANSLIT
+}
+
+function get-key(){
+    echo "$1" | base64 | sed 's@/@-@g;s@=@@g'
+}
+
+function get-name(){
+    local -r name="${1%/}"
+    echo "${name##*/}"
+}
+
+function get-list(){
+    local    option="$1"
+    local    selected="$2"
+    local -r sep="-----------------------------------"
+    local -i count=$(grep -c ";" $LISTS_DB)
+    local -r template2="| %2d  |  %-46s\t\t| %.17s |\n"
+
+
+    echo -e "\n$separator"
+    printf "$template" "GENERATOR M3U - SHOWING ALL LISTS                  \
+                    v$VERSION"
+
+
+    if [[ "$count" -le "1" ]]; then
+        errMsg noLists
+        return 1
+    fi
+
+    while IFS=";" read -r bid bkey bname bdate; do
+        echo "$separator"
+        if [[ "$bid" == "#ID" ]]; then
+            printf "| %2s  | %-54s  | %16s |\n" "#" " NAME" " LAST UPDATE    "
+        else
+            printf "$template2" "$bid" "$bname" "$bdate"
+        fi
+    done < $LISTS_DB
+    echo -e "$separator\n"
+
+    if [[ -z "$1" ]]; then
+        echo -e "+ [ACTIONS] ${sep}${sep}-+\n"
+        echo -e " 1. UPDATE\t\t\t     2. DELETE\t\t\t     3. EXIT\n"
+
+        read -n1 -p " Enter an option: " select
+
+        case "$select" in
+            1) echo; option="-u" ;;
+            2) echo; option="-d" ;;
+            3) echo "$separator"; exit ;;
+            *) echo; errMsg noOpt ;;
+        esac
+    fi
+
+    if [[ "$option" == "-u" ]]; then
+        echo -e "\n+ [UPDATE] ${sep}${sep}--+\n"
+        if [[ -z "$selected" ]]; then
+            echo "   Enter the list number to update"
+            echo -e "   or press A to update everything\n"
+            read selected
+            echo
+        fi
+
+        if [[ "$selected" -gt "0" ]] && [[ "$selected" -lt "$count" ]] \
+                                               || [[ "$selected" == "A" ]]; then
+            update-list "$selected"
+            return
+        fi
+        errMsg noOpt
+    fi
+
+    if [[ "$option" == "-d" ]]; then
+        echo -e "\n+ [DELETE] ${sep}${sep}--+\n"
+        if [[ -z "$selected" ]]; then
+            echo "   Enter the number of the list to be deleted"
+            echo -e "   or press A to delete all\n"
+            read selected
+            echo
+        fi
+
+        if [[ "$selected" -gt "0" ]] && [[ "$selected" -lt "$count" ]] \
+                                               || [[ "$selected" == "A" ]]; then
+            delete-list "$selected"
+            return
+        fi
+        errMsg noOpt
+    fi
+}
+
+# SETTERS ######################################################################
+
+function set-list(){
+    if [[ ! -d "$1" ]]; then
+        errMsg noDir
+        return 1
+    fi
+
+    local    dir="${1%/}"
+    local -r topDir=$(pwd)
+
+    if [[ "$1" =~ ^[^/].*$  ]]; then
+        dir="${topDir}/${dir}"
+    fi
+
+    find "$dir/" -name "*.mkv" 2>> $ERRORS_LOG | sort -bg > $FILE
+    local -i count=$(grep -c ".mkv$" $FILE)
+
+    if [[ "$count" -lt "1" ]]; then
+        errMsg noMKV
+        return 1
+    fi
+
+    local -r  name=$(get-name "$1")
+    local -r  key=$(get-key "$name")
+              count=$(grep -c ";" $LISTS_DB)
+    local -ra lt=($(grep ";${key};" $LISTS_DB))
+
+    if [[ "${#lt[@]}" -gt "0" ]]; then
+        errMsg dirExists
+        return 1
+    fi
+
+    ln -s "$1" "${DIR_PUBLIC}/${key}" 2>> $ERRORS_LOG
+
+    if [[ ! -d "${DIR_PUBLIC}/${key}" ]]; then
+        errMsg failedList
+        return 1
+    fi
+
+    create-list "$count" "$key" "$name" "$DATE"
+
+    if [[ "$?" != "0" ]]; then
+        sed -i "s/^${count};.*$//" "$LISTS_DB"
+        sed -i '/^$/d' "$LISTS_DB"
+        unlink "${DIR_PUBLIC}/${key}" 2>> $ERRORS_LOG
+        errMsg failedList
+        return 1
+    fi
+}
+
+function set-m3u8-header(){
+    local -r listEnc="#EXTENC: UTF-8"
+    local -r videoIntro="${URL_LOCAL}/intro.mp4"
+    local -r listHeader="#EXTM3U size=\"Medium\""
+    local -r listType="#EXT-X-PLAYLIST-TYPE: VOD"
+    local    upDate="\n#EXTINF:12,Last Update: ${DATE}\n${videoIntro}\n"
+    echo -e "${listHeader}\n${listEnc}\n${listType}\n${upDate}"
+}
+
+################################################################################
+
+if [[ $UID -eq 0 ]]; then
+    printf '\a'
+    echo "Cannot be run as root."
+    exit 1
+else
+    checkConfs
+    echo
+
+    case "$1" in
+        -u|-d) get-list "$@" ;;
+        -c) shift; set-list "$@";;
+        --check) check-files "$@" ;;
+        -h|--help) shift; get-help "$@" ;;
+         *) get-list ;;
+    esac
+
+    echo
+    printf '\a'
+fi
