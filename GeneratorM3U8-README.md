@@ -26,14 +26,6 @@ The correct structure, so that the covers are used correctly, should look like t
   * Movies must be in "mkv" format. This format was chosen because it is possible to transmit several subtitles and audios in the same file.
 
 
-  Movies/
-     .covers/
-         Movie Name 1.jpg
-         Movie Name 2.jpg
-         Movie Name 3.jpg
-  Movie Name 1.mkv
-  Movie Name 2.mkv
-  Movie Name 3.mkv
  
 # Setting up a directory for your favorite series
 * The "Series" directory will contain all series directories.
@@ -41,57 +33,4 @@ The correct structure, so that the covers are used correctly, should look like t
 * Each season directory must contain a hidden "jpg" file named ".cover.jpg". This file is the cover of the season it belongs to.
 * The ".cover.jpg" file will be used as the cover for all episodes of the same season.
 * Episodes can have any name. Its extension must be MKV, the extension chosen because it allows the transmission of several subtitles and audio files.
-
-
-Series/
-  Serie 1/
-      Season 1/
-          .cover.jpg
-          S01E01.mkv
-          S01E02.mkv
-          S01E03.mkv
-      Season 2/
-          .cover.jpg
-          S02E01.mkv
-          S02E02.mkv
-          S02E03.mkv
-      Season 3/
-          .cover.jpg
-          S03E01.mkv
-          S03E02.mkv
-          S03E03.mkv
-      Season 4/
-          .cover.jpg
-          S04E01.mkv
-          S04E02.mkv
-          S04E03.mkv
-      
-  Serie 2/
-      Season 1/
-        .cover.jpg
-        S01E01.mkv
-        S01E02.mkv
-        S01E03.mkv
-      Season 2/
-          .cover.jpg
-          S02E01.mkv
-          S02E02.mkv
-          S02E03.mkv
-      
-  Serie 3/
-      Season 1/
-        .cover.jpg
-        S01E01.mkv
-        S01E02.mkv
-        S01E03.mkv
-      Season 2/
-          .cover.jpg
-          S02E01.mkv
-          S02E02.mkv
-          S02E03.mkv
-      Season 3/
-          .cover.jpg
-          S03E01.mkv
-          S03E02.mkv
-          S03E03.mkv
 
