@@ -7,13 +7,14 @@ Go to Script -> [CLICK](https://github.com/valeriogustavo/valeriogustavo.github.
 
 
 
-Generate your m3u8 playlists from organized files.
+
+**Generate your m3u8 playlists from organized files.**
 
 
-* Change the LOCAL_URL to your LOCAL IP (use hostname -I).
-* If you are not going to use a public list with a different URL, set ENABLE_LIST_PUBLIC to False.
-* To use a public list with a URL other than URL_LOCAL, keep ENABLE_LIST_PUBLIC True and set URL_PUBLIC pointing to the correct domain.
-* It is necessary to have FFMPEG installed on the machine for the script to work properly.
+* Change the **LOCAL_URL** to your **LOCAL IP** (use hostname -I).
+* If you are not going to use a public list with a different URL, set **ENABLE_LIST_PUBLIC** to False.
+* To use a public list with a URL other than **URL_LOCAL**, keep **ENABLE_LIST_PUBLIC** *True* and set **URL_PUBLIC** pointing to the correct domain.
+* It is necessary to have **FFMPEG** installed on the machine for the script to work properly.
 
 
 
