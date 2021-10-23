@@ -167,8 +167,7 @@ function render-files(){
              :a;s@%20\([^?]\+\)$@\1@;ta
              ' $COVERPATHS
     else
-        sed -i "s@^\(.*/\)\(.*\)mkv\$@\1.covers/\2jpg@g" \
-                                                                     $COVERPATHS
+        sed -i "s@^\(.*/\)\(.*\)mkv\$@\1.covers/\2jpg@g" $COVERPATHS
     fi
 
     render-file-durations
