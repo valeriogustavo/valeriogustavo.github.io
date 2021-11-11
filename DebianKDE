@@ -484,8 +484,8 @@ function optimize_system(){
 function get_plasma_desktop(){
     install plasma-{nm,pa,{browser-,}integration,framework,firewall,workspace{,-wayland},desktop,widgets-addons}
     install kde-{spectacle,config-{sddm,screenlocker,gtk-style{,-preview}}} frei0r-plugins sddm
-    install k{init,ate,onsole,win-x11,sysguard,screen,hotkeys,dialog,id3-qt} ark
     install k{menuedit,deconnect,infocenter,torrent,denlive,calc,rename}
+    install k{init,ate,onsole,win-x11,screen,hotkeys,dialog,id3-qt} ark
     install po{werdevil,lkit-kde-agent-1} dolphin{,-plugins} gwenview
     install qml-module-org-kde-{kcm,newstuff} elisa librsvg2-common
     install kio-extras ffmpegthumbs kwalletmanager systemsettings
