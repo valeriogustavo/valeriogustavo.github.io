@@ -217,15 +217,20 @@ function lock_apps(){
     $write '
         Package: libreoffice*
         Pin: release a=unstable
-        Pin-Priority: 500
+        Pin-Priority: 550
 
         Package: firefox*
         Pin: release o=Debian
         Pin-Priority: 500
 
         Package: *-icon-theme*
-        Pin: release o=Debian
-        Pin-Priority: 500
+        Pin: release  a=unstable
+        Pin-Priority: 550
+        
+        Package: *
+        Pin: origin download.opensuse.org
+        Pin-Priority: 550
+
     ' | clean > /etc/apt/preferences.d/09-softwares
 
     # Desativamos o autoupdate
