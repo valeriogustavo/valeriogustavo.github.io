@@ -434,6 +434,9 @@ function optimize_system(){
         #VM
         vm.vfs_cache_pressure = 50
     ' | clean >> $SYSCTL
+    
+    cp -v /etc/hosts{,.bkp}
+    sed -i 's/^::/#::/;s/^ff/#ff/g' /etc/hosts
 
     
     if [[ $MEM -le 2 ]]; then
