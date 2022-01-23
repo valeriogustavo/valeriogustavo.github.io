@@ -272,7 +272,7 @@ function set_repos(){
     
     $write '
         deb https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/frameworks/Debian_Testing/ ./
-        deb https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/plasma523/Debian_Testing/ ./
+        deb https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/plasma524/Debian_Testing/ ./
         deb https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/apps2112/Debian_Testing/ ./
         deb https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/other/Debian_Testing/ ./
 
