@@ -69,7 +69,7 @@ function set_print(){
         'epson')
             install printer-driver-escpr
             
-            wget -c https://download2.ebz.epson.net/epsonscan2/common/deb/x64/epsonscan2-bundle-6.6.2.1.x86_64.deb.tar.gz -O epsonscan2.tar.gz
+            wget -c https://download2.ebz.epson.net/epsonscan2/common/deb/x64/epsonscan2-bundle-6.6.40.0.x86_64.deb.tar.gz -O epsonscan2.tar.gz
             
             if [[ -e './epsonscan2.tar.gz' ]]; then
                 tar -zxf ./epsonscan2.tar.gz
