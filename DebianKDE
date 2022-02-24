@@ -6,12 +6,13 @@
 ## A partir do Debian Testing Netboot Básico.                                ##
 ## Escrito por Gustavo Valério Ferreira                                      ##
 ## gustavovalerio.com.br                                                     ##
-## 1/1/2022 - V 0.3.4                                                        ##
+## 24/2/2022 - V 0.3.5                                                       ##
 ###############################################################################
 
 ### Variáveis
 readonly write='printf' # facilita o entendimento
 readonly return='printf' # retorno das funções amigáveis
+readonly KEYS='/etc/apt/keyrings' #armazena as keys dos repos
 
 function detect(){
     case "$1" in
@@ -99,14 +100,20 @@ function set_print(){
 }
 
 function get_keys(){
-    local -r GET="wget -qO -"
-    local -r KEY="apt-key add -"
+
+
+    local -r GET="wget -qO-"
+    local -r GPG="gpg --dearmor"
+
+    if [[ ! -d "$KEYS" ]]; then
+        mkdir -p "$KEYS"
+    fi
 
     install wget gnupg ca-certificates
-    
-    $GET https://dl.xanmod.org/gpg.key | $KEY
-    $GET https://dl.google.com/linux/linux_signing_key.pub | $KEY
-    $GET https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/frameworks/Debian_Testing/Release.key | $KEY
+
+    $GET https://dl.xanmod.org/gpg.key | $GPG > ${KEYS}/xanmod.gpg
+    $GET  https://dl.google.com/linux/linux_signing_key.pub | $GPG > ${KEYS}/google-chrome.gpg
+    $GET https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/frameworks/Debian_Testing/Release.key | $GPG > ${KEYS}/npreining.gpg
    
 }
 
@@ -246,13 +253,13 @@ function lock_apps(){
 function set_repos(){
     rm -f /etc/apt/sources.list
     
-    $write '
-        deb [arch=amd64] http://deb.xanmod.org releases main
-    ' | clean > /etc/apt/sources.list.d/xanmod-kernel.list
+    $write "
+        deb [arch=amd64 signed-by=${KEYS}/xanmod.gpg] http://deb.xanmod.org releases main
+    " | clean > /etc/apt/sources.list.d/xanmod-kernel.list
     
-    $write '
-        deb [arch=amd64] https://dl.google.com/linux/chrome/deb stable main
-    ' | clean > /etc/apt/sources.list.d/google-chrome.list
+    $write "
+        deb [arch=amd64 signed-by=${KEYS}/google-chrome.gpg] https://dl.google.com/linux/chrome/deb stable main
+    " | clean > /etc/apt/sources.list.d/google-chrome.list
 
     $write '
         deb [arch=amd64] http://deb.debian.org/debian testing main contrib non-free
@@ -270,13 +277,13 @@ function set_repos(){
         deb [arch=amd64] http://security.debian.org/debian-security testing-security main contrib non-free
     ' | clean > /etc/apt/sources.list.d/testing-security.list
     
-    $write '
-        deb https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/frameworks/Debian_Testing/ ./
-        deb https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/plasma524/Debian_Testing/ ./
-        deb https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/apps2112/Debian_Testing/ ./
-        deb https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/other/Debian_Testing/ ./
+    $write "
+        deb [arch=amd64 signed-by=${KEYS}/npreining.gpg] https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/frameworks/Debian_Testing/ ./
+        deb [arch=amd64 signed-by=${KEYS}/npreining.gpg] https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/plasma524/Debian_Testing/ ./
+        deb [arch=amd64 signed-by=${KEYS}/npreining.gpg] https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/apps2112/Debian_Testing/ ./
+        deb [arch=amd64 signed-by=${KEYS}/npreining.gpg] https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/other/Debian_Testing/ ./
 
-    ' | clean > /etc/apt/sources.list.d/npreining.list
+    " | clean > /etc/apt/sources.list.d/npreining.list
 }
 
 function clean_system(){
