@@ -112,7 +112,7 @@ function get_keys(){
     install wget gnupg ca-certificates
 
     $GET https://dl.xanmod.org/gpg.key | $GPG > ${KEYS}/xanmod.gpg
-    $GET  https://dl.google.com/linux/linux_signing_key.pub | $GPG > ${KEYS}/google-chrome.gpg
+    $GET https://dl.google.com/linux/linux_signing_key.pub | $GPG > ${KEYS}/google-chrome.gpg
     $GET https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/frameworks/Debian_Testing/Release.key | $GPG > ${KEYS}/npreining.gpg
    
 }
