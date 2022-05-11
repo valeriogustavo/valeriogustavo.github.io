@@ -6,7 +6,7 @@
 ## A partir do Debian Testing Netboot Básico.                                ##
 ## Escrito por Gustavo Valério Ferreira                                      ##
 ## gustavovalerio.com.br                                                     ##
-## 3/4/2022 - V 0.3.7                                                        ##
+## 11/5/2022 - V 0.3.8                                                        ##
 ###############################################################################
 
 ### Variáveis
@@ -124,7 +124,7 @@ function get_apps(){
     install gstreamer1.0-plugins-{bad,good,ugly}
     install firefox{,-l10n-pt-br} google-chrome-stable
     install gimp{,-gmic,-data-extras,-plugin-registry} inkscape python3-{lxml,pil}
-    install libreoffice-{style-sifr,calc,writer,{l10n,lightproof}-pt-br,{kf,qt}5} hunspell-pt-br
+    install libreoffice-{style-sifr,calc,writer,{l10n,lightproof}-pt-br,{kf,qt}5} hunspell-pt-br hyphen-pt-br
 }
 
 function set_grub(){
