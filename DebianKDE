@@ -124,7 +124,7 @@ function get_apps(){
     install gstreamer1.0-plugins-{bad,good,ugly}
     install firefox{,-l10n-pt-br} google-chrome-stable
     install gimp{,-gmic,-data-extras,-plugin-registry} inkscape python3-{lxml,pil}
-    install libreoffice-{style-sifr,calc,writer,{l10n,lightproof}-pt-br,{kf,qt}5} hunspell-pt-br hyphen-pt-br
+    install libreoffice-{style-sifr,calc,writer,{l10n,lightproof}-pt-br,{kf,qt}5} {hunspell,hyphen}-pt-br
 }
 
 function set_grub(){
