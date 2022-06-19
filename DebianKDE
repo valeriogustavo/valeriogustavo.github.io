@@ -6,7 +6,7 @@
 ## A partir do Debian Testing Netboot Básico.                                ##
 ## Escrito por Gustavo Valério Ferreira                                      ##
 ## gustavovalerio.com.br                                                     ##
-## 11/5/2022 - V 0.3.8                                                        ##
+## 19/6/2022 - V 0.3.9                                                        ##
 ###############################################################################
 
 ### Variáveis
@@ -497,8 +497,8 @@ function optimize_system(){
 
 function get_plasma_desktop(){
     install plasma-{nm,pa,{browser-,}integration,framework,firewall,workspace{,-wayland},desktop,widgets-addons}
-    install kde-{spectacle,config-{sddm,screenlocker,gtk-style{,-preview}}} frei0r-plugins sddm
-    install k{menuedit,deconnect,infocenter,torrent,denlive,calc,rename}
+    install kde-{spectacle,config-{sddm,screenlocker,gtk-style{,-preview}}} sddm kdegraphics-mobipocket
+    install k{menuedit,deconnect,infocenter,torrent,denlive,calc,rename} frei0r-plugins
     install k{init,ate,onsole,win-x11,screen,hotkeys,dialog,id3-qt} ark
     install po{werdevil,lkit-kde-agent-1} dolphin{,-plugins} gwenview
     install qml-module-org-kde-{kcm,newstuff} elisa librsvg2-common
