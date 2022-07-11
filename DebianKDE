@@ -6,7 +6,7 @@
 ## A partir do Debian Testing Netboot Básico.                                ##
 ## Escrito por Gustavo Valério Ferreira                                      ##
 ## gustavovalerio.com.br                                                     ##
-## 19/6/2022 - V 0.3.9                                                        ##
+## 11/7/2022 - V 0.3.10                                                      ##
 ###############################################################################
 
 ### Variáveis
@@ -278,7 +278,7 @@ function set_repos(){
     
     $write "
         deb [arch=amd64 signed-by=${KEYS}/npreining.gpg] https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/frameworks/Debian_Testing/ ./
-        deb [arch=amd64 signed-by=${KEYS}/npreining.gpg] https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/plasma524/Debian_Testing/ ./
+        deb [arch=amd64 signed-by=${KEYS}/npreining.gpg] https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/plasma525/Debian_Testing/ ./
         deb [arch=amd64 signed-by=${KEYS}/npreining.gpg] https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/apps2204/Debian_Testing/ ./
         deb [arch=amd64 signed-by=${KEYS}/npreining.gpg] https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/other/Debian_Testing/ ./
 
