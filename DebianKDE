@@ -6,7 +6,7 @@
 ## A partir do Debian Testing Netboot Básico.                                ##
 ## Escrito por Gustavo Valério Ferreira                                      ##
 ## gustavovalerio.com.br                                                     ##
-## 11/7/2022 - V 0.3.10                                                      ##
+## 13/8/2022 - V 0.3.11                                                      ##
 ###############################################################################
 
 ### Variáveis
@@ -137,6 +137,7 @@ function set_grub(){
     $write '
         GRUB_DEFAULT=0
         GRUB_TIMEOUT=1
+        GRUB_DISABLE_OS_PROBER=false
         GRUB_CMDLINE_LINUX_DEFAULT="quiet splash=silent"
         GRUB_DISTRIBUTOR=`lsb_release -i -s 2> /dev/null || echo Debian`
         GRUB_CMDLINE_LINUX="mitigations=off nowatchdog loglevel=3 vga=current systemd.show_status=false rd.udev.log_priority=3 libahci.ignore_sss=1"
