@@ -385,7 +385,7 @@ function optimize_system(){
     sed -i 's/Logo=1/Logo=0/g' /etc/libreoffice/sofficerc
     
     # Seta lz4 para decompactar o kernel (boot +rápido)
-    install lz4 liblz4-1 zstd
+    install zstd
     sed -i 's/COMPRESS=gzip/COMPRESS=zstd/g' /etc/initramfs-tools/initramfs.conf
 
     $write '
