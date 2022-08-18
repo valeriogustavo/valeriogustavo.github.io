@@ -386,7 +386,7 @@ function optimize_system(){
     
     # Seta lz4 para decompactar o kernel (boot +rápido)
     install lz4 liblz4-1 zstd
-    sed -i 's/COMPRESS=gzip/COMPRESS=lz4/g' /etc/initramfs-tools/initramfs.conf
+    sed -i 's/COMPRESS=gzip/COMPRESS=zstd/g' /etc/initramfs-tools/initramfs.conf
 
     $write '
         #CORE
