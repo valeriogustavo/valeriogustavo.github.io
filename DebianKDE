@@ -473,6 +473,7 @@ function optimize_system(){
         # Mas, por garantia, melhor habilitar manualmente.
         apt install util-linux
         systemctl enable fstrim.timer
+        systemctl start fstrim.timer
     else
         $write '
             vm.dirty_background_ratio = 5
