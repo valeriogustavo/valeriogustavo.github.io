@@ -6,7 +6,7 @@
 ## A partir do Debian Testing Netboot Básico.                                ##
 ## Escrito por Gustavo Valério Ferreira                                      ##
 ## gustavovalerio.com.br                                                     ##
-## 18/8/2022 - V 0.3.12                                                      ##
+## 20/8/2022 - V 0.3.13                                                      ##
 ###############################################################################
 
 ### Variáveis
@@ -385,8 +385,8 @@ function optimize_system(){
     sed -i 's/Logo=1/Logo=0/g' /etc/libreoffice/sofficerc
     
     # Seta lz4 para decompactar o kernel (boot +rápido)
-    install zstd
-    sed -i 's/COMPRESS=gzip/COMPRESS=zstd/g' /etc/initramfs-tools/initramfs.conf
+    install zstd lzop
+    sed -i 's/COMPRESS=.*$/COMPRESS=lzop/' /etc/initramfs-tools/initramfs.conf
 
     $write '
         #CORE
