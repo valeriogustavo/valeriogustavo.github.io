@@ -471,6 +471,7 @@ function optimize_system(){
 
         # O Debian ativa o trim automaticamente,
         # Mas, por garantia, melhor habilitar manualmente.
+        apt install util-linux
         systemctl enable fstrim.timer
     else
         $write '
