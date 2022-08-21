@@ -6,7 +6,7 @@
 ## A partir do Debian Testing Netboot Básico.                                ##
 ## Escrito por Gustavo Valério Ferreira                                      ##
 ## gustavovalerio.com.br                                                     ##
-## 20/8/2022 - V 0.3.13                                                      ##
+## 21/8/2022 - V 0.3.14                                                      ##
 ###############################################################################
 
 ### Variáveis
@@ -465,8 +465,8 @@ function optimize_system(){
 
     if [[ $DISK_TYPE -eq 0 ]]; then
         $write '
-            vm.dirty_background_ratio = 3
-            vm.dirty_ratio = 5
+            vm.dirty_background_ratio = 15
+            vm.dirty_ratio = 25
         ' | clean >> $SYSCTL
 
         # O Debian ativa o trim automaticamente,
@@ -476,8 +476,10 @@ function optimize_system(){
         systemctl start fstrim.timer
     else
         $write '
-            vm.dirty_background_ratio = 5
-            vm.dirty_ratio = 15
+            vm.dirty_writeback_centisecs = 1500
+            vm.dirty_expire_centisecs = 4500
+            vm.dirty_background_ratio = 20
+            vm.dirty_ratio = 35
         ' | clean >> $SYSCTL
     fi
     
