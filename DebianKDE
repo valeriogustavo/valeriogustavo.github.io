@@ -6,7 +6,7 @@
 ## A partir do Debian Testing Netboot Básico.                                ##
 ## Escrito por Gustavo Valério Ferreira                                      ##
 ## gustavovalerio.com.br                                                     ##
-## 24/8/2022 - V 0.3.15                                                      ##
+## 28/08/2022 - V 0.4.0                                                      ##
 ###############################################################################
 
 ### Variáveis
@@ -366,11 +366,7 @@ function optimize_system(){
 
         install preload
 
-        # Habilita um RAMDISK, melhora o desempenho do sistema.
-        cp /usr/share/systemd/tmp.mount /etc/systemd/system/
-        systemctl enable tmp.mount
-
-        # Configurando o Preload e o Libreoffice
+        # Configurando o Preload
         sed -i 's/memfree = 50/memfree = 100/g'         /etc/preload.conf
         sed -i 's/memcached = 0/memcached = 30/g'       /etc/preload.conf
         sed -i 's/processes = 30/processes = 60/g'      /etc/preload.conf
@@ -380,13 +376,25 @@ function optimize_system(){
         # Isso ramdomiza os binários e melhora a segurança.
         prelink -amvR
     fi
-
+    
+    # Habilita um RAMDISK, melhora o desempenho do sistema.
+    cp /usr/share/systemd/tmp.mount /etc/systemd/system/
+    systemctl enable tmp.mount
+        
     # Configurando o Libreoffice
     sed -i 's/Logo=1/Logo=0/g' /etc/libreoffice/sofficerc
     
     # Seta lz4 para decompactar o kernel (boot +rápido)
     install zstd lzop
-    sed -i 's/COMPRESS=.*$/COMPRESS=lzop/' /etc/initramfs-tools/initramfs.conf
+    sed -i 's/COMPRESS=.*$/COMPRESS=zstd/' /etc/initramfs-tools/initramfs.conf
+    
+    mv /etc/systemd/journald.conf{,.orig}
+    
+    $write '
+        [Journal]
+        Storage=volatile
+        SystemMaxUse=20M
+    ' | clean > /etc/systemd/journald.conf
 
     $write '
         #CORE
