@@ -41,7 +41,7 @@ The correct structure, so that the covers are used correctly, should look like t
 
 
 # Para adionar um diretório na lista, use
-`./GeneratorM3U8 /path/to/directory`
+`./GeneratorM3U8 -c /path/to/directory`
 
 # Para visualizar, atualizar ou apagar diretórios da lista, use
 `./GeneratorM3U8`
