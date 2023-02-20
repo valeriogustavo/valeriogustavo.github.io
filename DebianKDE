@@ -513,7 +513,7 @@ function get_plasma_desktop(){
     install kde-{spectacle,config-{sddm,screenlocker,gtk-style{,-preview}}} sddm kdegraphics-mobipocket
     install k{menuedit,deconnect,infocenter,torrent,denlive,calc,rename} kdegraphics-thumbnailers
     install po{werdevil,lkit-kde-agent-1} dolphin{,-plugins} gwenview qt5-image-formats-plugins
-    install k{init,ate,onsole,win-x11,screen,hotkeys,dialog,id3-qt} ark frei0r-plugins
+    install k{init,ate,onsole,win-x11,screen,hotkeys,dialog,id3-qt} ark {sonnet,frei0r}-plugins
     install qml-module-org-kde-{kcm,newstuff} elisa librsvg2-common
     install kio-extras ffmpegthumbs kwalletmanager systemsettings
     install breeze{,-gtk-theme} gtk3-engines-breeze okular
