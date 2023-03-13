@@ -6,7 +6,7 @@
 ## A partir do Debian Testing Netboot Básico.                                ##
 ## Escrito por Gustavo Valério Ferreira                                      ##
 ## gustavovalerio.com.br                                                     ##
-## 02/12/2022 - V 0.5.0                                                      ##
+## 13/03/2023 - V 0.6.0                                                      ##
 ###############################################################################
 
 ### Variáveis
@@ -262,19 +262,19 @@ function set_repos(){
     " | clean > /etc/apt/sources.list.d/google-chrome.list
 
     $write '
-        deb [arch=amd64] http://deb.debian.org/debian testing main contrib non-free
+        deb [arch=amd64] http://deb.debian.org/debian testing main contrib non-free non-free-firmware
     ' | clean > /etc/apt/sources.list.d/testing-all.list
 
     $write '
-        deb [arch=amd64] http://deb.debian.org/debian unstable main contrib non-free
+        deb [arch=amd64] http://deb.debian.org/debian unstable main contrib non-free non-free-firmware
     ' | clean > /etc/apt/sources.list.d/unstable-all.list
 
     $write '
-        deb [arch=amd64] http://deb.debian.org/debian experimental main contrib non-free
+        deb [arch=amd64] http://deb.debian.org/debian experimental main contrib non-free non-free-firmware
     ' | clean > /etc/apt/sources.list.d/experimental-all.list
     
     $write '
-        deb [arch=amd64] http://security.debian.org/debian-security testing-security main contrib non-free
+        deb [arch=amd64] http://security.debian.org/debian-security testing-security main contrib non-free non-free-firmware
     ' | clean > /etc/apt/sources.list.d/testing-security.list
     
     $write "
@@ -510,13 +510,12 @@ function optimize_system(){
 
 function get_plasma_desktop(){
     install plasma-{nm,pa,{browser-,}integration,framework,firewall,workspace{,-wayland},desktop,widgets-addons}
-    install kde-{spectacle,config-{sddm,screenlocker,gtk-style{,-preview}}} sddm kdegraphics-mobipocket
-    install k{menuedit,deconnect,infocenter,torrent,denlive,calc,rename} kdegraphics-thumbnailers
-    install po{werdevil,lkit-kde-agent-1} dolphin{,-plugins} gwenview qt5-image-formats-plugins
-    install k{init,ate,onsole,win-x11,screen,hotkeys,dialog,id3-qt} ark {sonnet,frei0r}-plugins
-    install qml-module-org-kde-{kcm,newstuff} elisa librsvg2-common
-    install kio-extras ffmpegthumbs kwalletmanager systemsettings
-    install breeze{,-gtk-theme} gtk3-engines-breeze okular
+    install kde-{spectacle,config-{sddm,screenlocker,gtk-style{,-preview}}} sddm kdegraphics-mobipocket okular
+    install po{werdevil,lkit-kde-agent-1} dolphin{,-plugins} gwenview qt5-image-formats-plugins systemsettings
+    install k{menuedit,deconnect,infocenter,torrent,denlive,calc,rename} kdegraphics-thumbnailers ffmpegthumbs
+    install k{init,ate,onsole,win-x11,screen,hotkeys,dialog,id3-qt} ark {sonnet,frei0r}-plugins kio-extras
+    install qml-module-org-kde-{kcm,newstuff} elisa librsvg2-common kwalletmanager gtk3-engines-breeze
+    install breeze{,-gtk-theme} 
 }
 
 if [[ "$1" == "exec" ]] && [[ $UID -eq 0 ]]; then
