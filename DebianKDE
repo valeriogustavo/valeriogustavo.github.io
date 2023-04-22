@@ -6,7 +6,7 @@
 ## A partir do Debian Testing Netboot Básico.                                ##
 ## Escrito por Gustavo Valério Ferreira                                      ##
 ## gustavovalerio.com.br                                                     ##
-## 13/03/2023 - V 0.6.0                                                      ##
+## 22/04/2023 - V 0.7.0                                                      ##
 ###############################################################################
 
 ### Variáveis
@@ -112,9 +112,7 @@ function get_keys(){
     install wget gnupg ca-certificates
 
     $GET https://dl.xanmod.org/gpg.key | $GPG > ${KEYS}/xanmod.gpg
-    $GET https://dl.google.com/linux/linux_signing_key.pub | $GPG > ${KEYS}/google-chrome.gpg
-    $GET https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/frameworks/Debian_Testing/Release.key | $GPG > ${KEYS}/npreining.gpg
-   
+    $GET https://dl.google.com/linux/linux_signing_key.pub | $GPG > ${KEYS}/google-chrome.gpg   
 }
 
 function get_apps(){
@@ -233,11 +231,6 @@ function lock_apps(){
         Package: *-icon-theme*
         Pin: release  a=unstable
         Pin-Priority: 550
-        
-        Package: *
-        Pin: origin download.opensuse.org
-        Pin-Priority: 550
-
     ' | clean > /etc/apt/preferences.d/09-softwares
 
     # Desativamos o autoupdate
@@ -276,14 +269,6 @@ function set_repos(){
     $write '
         deb [arch=amd64] http://security.debian.org/debian-security testing-security main contrib non-free non-free-firmware
     ' | clean > /etc/apt/sources.list.d/testing-security.list
-    
-    $write "
-        deb [arch=amd64 signed-by=${KEYS}/npreining.gpg] https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/frameworks/Debian_Testing/ ./
-        deb [arch=amd64 signed-by=${KEYS}/npreining.gpg] https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/plasma525/Debian_Testing/ ./
-        deb [arch=amd64 signed-by=${KEYS}/npreining.gpg] https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/apps2208/Debian_Testing/ ./
-        deb [arch=amd64 signed-by=${KEYS}/npreining.gpg] https://download.opensuse.org/repositories/home:/npreining:/debian-kde:/other/Debian_Testing/ ./
-
-    " | clean > /etc/apt/sources.list.d/npreining.list
 }
 
 function clean_system(){
@@ -318,7 +303,7 @@ function get_essentials(){
         install xserver-xorg-video-all
     fi
     
-    install pulseaudio{,-utils,-module-gsettings} nano x{init,auth,server-xorg-core} irqbalance ufw thermald python-is-python3
+    install pulseaudio{,-utils,-module-gsettings} nano x{init,auth,server-xorg-core} irqbalance ufw thermald python-is-python3sudo systemd-timesyncd
 }
 
 function optimize_system(){
@@ -335,6 +320,10 @@ function optimize_system(){
     # Liberando portas para o KDE Connect
     ufw allow 1714:1764/tcp
     ufw allow 1714:1764/udp
+    
+    #Sincronizando data e hora
+    sed -i 's/#NTP=/NTP=a.st1.ntp.br b.st1.ntp.br c.st1.ntp.br d.st1.ntp.br a.ntp.br b.ntp.br c.ntp.br gps.ntp.br/' /etc/systemd/timesyncd.conf
+    systemctl start systemd-timesyncd
 
 
     if [[ $MEM -ge 6 ]]; then
