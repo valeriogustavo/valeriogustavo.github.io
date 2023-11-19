@@ -6,7 +6,7 @@
 ## A partir do Debian Testing Netboot Básico.                                ##
 ## Escrito por Gustavo Valério Ferreira                                      ##
 ## gustavovalerio.com.br                                                     ##
-## 19/11/2023 - V 0.8.0                                                      ##
+## 19/11/2023 - V 0.9.0                                                      ##
 ###############################################################################
 
 ### Variáveis
@@ -303,7 +303,7 @@ function get_essentials(){
         install xserver-xorg-video-all
     fi
     
-    install pulseaudio{,-utils,-module-gsettings} nano x{init,auth,server-xorg-core} irqbalance ufw thermald python-is-python3sudo systemd-timesyncd
+    install pulseaudio{,-utils,-module-gsettings} nano x{init,auth,server-xorg-core} irqbalance ufw thermald python-is-python3sudo systemd-{timesyncd,resolved}
 }
 
 function optimize_system(){
@@ -316,6 +316,9 @@ function optimize_system(){
     systemctl mask apt-daily{,-upgrade}{.service,.timer} NetworkManager-wait-online.service 
     # Systemd às vezes não inicia o UFW
     systemctl enable ufw && ufw enable
+
+    #ativando cache de DNS via systemd-resolved
+    systemctl enable systemd-resolved.service
 
     # Liberando portas para o KDE Connect
     ufw allow 1714:1764/tcp
