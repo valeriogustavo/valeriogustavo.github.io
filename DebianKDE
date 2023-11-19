@@ -6,7 +6,7 @@
 ## A partir do Debian Testing Netboot Básico.                                ##
 ## Escrito por Gustavo Valério Ferreira                                      ##
 ## gustavovalerio.com.br                                                     ##
-## 22/04/2023 - V 0.7.0                                                      ##
+## 19/11/2023 - V 0.8.0                                                      ##
 ###############################################################################
 
 ### Variáveis
@@ -348,7 +348,7 @@ function optimize_system(){
                 # Configurando o DPKG para executar o Prelink
                 # Sempre que houver remoção ou instalação de pacotes
                 $write '
-                    DPkg::Post-Invoke {"sleep 2;/usr/sbin/prelink -amR";}
+                    DPkg::Post-Invoke {"sleep 2;/usr/sbin/prelink -amR;/usr/sbin/ldconfig";}
                     ' | clean > /etc/apt/apt.conf.d/10-prelink
             fi
         fi
