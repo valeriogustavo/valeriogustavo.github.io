@@ -315,6 +315,7 @@ function optimize_system(){
     systemctl disable --now apt-daily{,-upgrade}{.service,.timer} NetworkManager-wait-online.service
     systemctl mask apt-daily{,-upgrade}{.service,.timer} NetworkManager-wait-online.service 
     # Systemd às vezes não inicia o UFW
+    ufw logging low  #Reduzir os logs do UFW
     systemctl enable ufw && ufw enable
 
     #ativando cache de DNS via systemd-resolved
