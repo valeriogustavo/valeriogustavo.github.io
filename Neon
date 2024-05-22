@@ -276,6 +276,7 @@ function other_settings(){
     fi
 
     prelink -amvR # Prelinkando usando randomização de binários. (+ seguro)
+    ufw logging low
     systemctl enable ufw && ufw enable # Às vezes o Systemd não ativa o serviço
 }
 
